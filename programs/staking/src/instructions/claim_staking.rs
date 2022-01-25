@@ -5,10 +5,10 @@ use crate::{Jungle, Animal};
 
 #[derive(Accounts)]
 pub struct ClaimStaking<'info> {
-    /// The jungle state
+    /// The staking state
     #[account(
         seeds = [
-            b"jungle",
+            b"staking",
             jungle.key.as_ref()
         ],
         bump = jungle.bumps.jungle,

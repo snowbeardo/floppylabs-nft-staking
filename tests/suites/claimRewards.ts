@@ -80,7 +80,7 @@ export const testClaimRewards = (
       tree = nfts.tree;
 
       const [jungleAddress, jungleBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("jungle"), jungleKey.toBuffer()],
+        [Buffer.from("staking"), jungleKey.toBuffer()],
         program.programId
       );
       const [escrow, escrowBump] = await PublicKey.findProgramAddress(
@@ -217,7 +217,7 @@ export const testClaimRewards = (
 
     it("Claim staking rewards", async () => {
       const [jungleAddress, jungleBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("jungle", "utf8"), jungleKey.toBuffer()],
+        [Buffer.from("staking", "utf8"), jungleKey.toBuffer()],
         program.programId
       );
       const [escrow, escrowBump] = await PublicKey.findProgramAddress(
@@ -312,7 +312,7 @@ export const testClaimRewards = (
 
     it("Can't claim an unstaked token", async () => {
       const [jungleAddress, jungleBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("jungle", "utf8"), jungleKey.toBuffer()],
+        [Buffer.from("staking", "utf8"), jungleKey.toBuffer()],
         program.programId
       );
       const [escrow, escrowBump] = await PublicKey.findProgramAddress(
@@ -364,7 +364,7 @@ export const testClaimRewards = (
 
     it("Can't claim an unowned token", async () => {
       const [jungleAddress, jungleBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("jungle", "utf8"), jungleKey.toBuffer()],
+        [Buffer.from("staking", "utf8"), jungleKey.toBuffer()],
         program.programId
       );
       const [escrow, escrowBump] = await PublicKey.findProgramAddress(

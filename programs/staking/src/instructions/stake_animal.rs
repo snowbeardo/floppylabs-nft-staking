@@ -8,11 +8,11 @@ use crate::errors::*;
 #[derive(Accounts)]
 #[instruction(bumps: StakeAnimalBumps)]
 pub struct StakeAnimal<'info> {
-    /// The jungle state
+    /// The staking state
     #[account(
         mut,
         seeds = [
-            b"jungle",
+            b"staking",
             jungle.key.as_ref()
         ],
         bump = jungle.bumps.jungle
@@ -31,7 +31,7 @@ pub struct StakeAnimal<'info> {
     pub escrow: AccountInfo<'info>,
 
     /// The created staking account
-    /// Doesn't use jungle.key as one token can only be staked once 
+    /// Doesn't use staking.key as one token can only be staked once
     #[account(
         init,
         payer = staker,
@@ -60,7 +60,7 @@ pub struct StakeAnimal<'info> {
     pub staker_account: Account<'info, TokenAccount>,
 
     /// The account that will hold the token being staked
-    /// Doesn't use jungle.key as one token can only be staked once
+    /// Doesn't use staking.key as one token can only be staked once
     #[account(
         init,
         payer = staker,

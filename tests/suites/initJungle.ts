@@ -64,7 +64,7 @@ export const testInitializeJungle = (
 
     it("Initializes the jungle", async () => {
       const [jungleAddress, jungleBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("jungle"), state.jungleKey.toBuffer()],
+        [Buffer.from("staking"), state.jungleKey.toBuffer()],
         program.programId
       );
       const [escrow, escrowBump] = await PublicKey.findProgramAddress(
@@ -132,7 +132,7 @@ export const testInitializeJungle = (
     it("Only accepts positive multipliers", async () => {
       const jungleKey = Keypair.generate().publicKey;
       const [jungleAddress, jungleBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("jungle"), jungleKey.toBuffer()],
+        [Buffer.from("staking"), jungleKey.toBuffer()],
         program.programId
       );
       const [escrow, escrowBump] = await PublicKey.findProgramAddress(

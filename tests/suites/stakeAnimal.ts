@@ -75,7 +75,7 @@ export const testStakeAnimal = (
       tree = nfts.tree;
 
       const [jungleAddress, jungleBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("jungle", "utf8"), state.jungleKey.toBuffer()],
+        [Buffer.from("staking", "utf8"), state.jungleKey.toBuffer()],
         program.programId
       );
 
@@ -98,7 +98,7 @@ export const testStakeAnimal = (
 
     it("Stake a token", async () => {
       const [jungleAddress, jungleBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("jungle", "utf8"), state.jungleKey.toBuffer()],
+        [Buffer.from("staking", "utf8"), state.jungleKey.toBuffer()],
         program.programId
       );
       const [escrow, escrowBump] = await PublicKey.findProgramAddress(
@@ -168,7 +168,7 @@ export const testStakeAnimal = (
 
     it("Fails when it's too early", async () => {
       const [jungleAddress, jungleBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("jungle", "utf8"), state.jungleKey.toBuffer()],
+        [Buffer.from("staking", "utf8"), state.jungleKey.toBuffer()],
         program.programId
       );
 
@@ -255,7 +255,7 @@ export const testStakeAnimal = (
 
     it("Can't stake an unowned token", async () => {
       const [jungleAddress, jungleBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("jungle", "utf8"), state.jungleKey.toBuffer()],
+        [Buffer.from("staking", "utf8"), state.jungleKey.toBuffer()],
         program.programId
       );
       const [escrow, escrowBump] = await PublicKey.findProgramAddress(

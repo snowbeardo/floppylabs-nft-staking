@@ -14,7 +14,7 @@ declare_id!("8XgPs7DNb7jvZqu5Y6zbF1idvrXnLtHZK4kVGKALd9fS");
 mod jungle {
     use super::*;
 
-    /// Initializes the jungle
+    /// Initializes the staking
     pub fn initialize_jungle(
         ctx: Context<InitializeJungle>,
         bumps: InitializeJungleBumps,
@@ -35,7 +35,7 @@ mod jungle {
         )
     }
 
-    /// Sets the jungle parameters
+    /// Sets the staking parameters
     pub fn set_jungle(
         ctx: Context<SetJungle>,
         max_rarity: u64,
@@ -86,10 +86,6 @@ mod jungle {
         instructions::claim_staking::handler(ctx)
     }
 
-    // /// Enter the lottery by spending staking rewards
-    // pub fn enter_lottery(ctx: Context<Participate>, bump: u8, spendings: [u64; 8]) -> ProgramResult {
-    //     instructions::participate::handler(ctx, bump, spendings)
-    // }
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]

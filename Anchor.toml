@@ -1,6 +1,5 @@
 [programs.localnet]
 jungle = "8XgPs7DNb7jvZqu5Y6zbF1idvrXnLtHZK4kVGKALd9fS"
-lottery = "6LUNT8JqxCKFw7u1R1PP2wgDTdgYskwGGFK1azVuzJZC"
 
 [registry]
 url = "https://anchor.projectserum.com"
@@ -10,6 +9,4 @@ cluster = "localnet"
 wallet = "./key.json"
 
 [scripts]
-test = "ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
-test-jungle = "ts-mocha -p ./tsconfig.json -t 1000000 tests/jungle.ts"
-test-lottery = "anchor build && ts-mocha -p ./tsconfig.json -t 1000000 tests/**/lottery.ts"
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"

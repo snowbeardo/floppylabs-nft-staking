@@ -77,7 +77,7 @@ export const testWithdrawRewards = (
       tree = nfts.tree;
 
       const [jungleAddress, jungleBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("jungle"), jungleKey.toBuffer()],
+        [Buffer.from("staking"), jungleKey.toBuffer()],
         program.programId
       );
       const [escrow, escrowBump] = await PublicKey.findProgramAddress(
@@ -128,7 +128,7 @@ export const testWithdrawRewards = (
 
     it("Withdraw rewards", async () => {
       const [jungleAddress, jungleBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("jungle"), jungleKey.toBuffer()],
+        [Buffer.from("staking"), jungleKey.toBuffer()],
         program.programId
       );
       const [escrow, escrowBump] = await PublicKey.findProgramAddress(

@@ -9,7 +9,7 @@ pub struct UnstakeAnimal<'info> {
     #[account(
         mut,
         seeds = [
-            b"jungle",
+            b"staking",
             jungle.key.as_ref()
         ],
         bump = jungle.bumps.jungle

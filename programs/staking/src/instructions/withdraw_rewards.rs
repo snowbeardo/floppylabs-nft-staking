@@ -8,7 +8,7 @@ pub struct WithdrawRewards<'info> {
     /// The Jungle
     #[account(
         seeds = [
-            b"jungle",
+            b"staking",
             jungle.key.as_ref()
         ],
         bump = jungle.bumps.jungle,
@@ -42,7 +42,7 @@ pub struct WithdrawRewards<'info> {
     )]
     pub rewards_account: Account<'info, TokenAccount>,
 
-    /// The wallet that will own the jungle
+    /// The wallet that will own the staking
     pub owner: Signer<'info>,
 
     /// The old staking rewards account
