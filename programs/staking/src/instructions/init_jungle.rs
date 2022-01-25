@@ -16,7 +16,7 @@ pub struct InitializeJungle<'info> {
         init,
         payer = owner,
         seeds = [
-            b"jungle",
+            b"staking",
             jungle_key.key().as_ref()
         ],
         bump = bumps.jungle,
@@ -51,7 +51,7 @@ pub struct InitializeJungle<'info> {
     )]
     pub rewards_account: Account<'info, TokenAccount>,
 
-    /// The wallet owning the jungle
+    /// The wallet owning the staking
     #[account(mut)]
     pub owner: Signer<'info>,
 
@@ -63,7 +63,7 @@ pub struct InitializeJungle<'info> {
     pub system_program: Program<'info, System>,
 }
 
-/// Initializes the jungle parameters
+/// Initializes the staking parameters
 pub fn handler(
     ctx: Context<InitializeJungle>,
     bumps: InitializeJungleBumps,

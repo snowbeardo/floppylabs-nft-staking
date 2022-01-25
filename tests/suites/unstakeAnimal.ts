@@ -79,7 +79,7 @@ export const testUnstakeAnimal = (
       tree = nfts.tree;
 
       const [jungleAddress, jungleBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("jungle"), jungleKey.toBuffer()],
+        [Buffer.from("staking"), jungleKey.toBuffer()],
         program.programId
       );
       const [escrow, escrowBump] = await PublicKey.findProgramAddress(
@@ -170,7 +170,7 @@ export const testUnstakeAnimal = (
 
     it("Unstake a token", async () => {
       const [jungleAddress, jungleBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("jungle", "utf8"), jungleKey.toBuffer()],
+        [Buffer.from("staking", "utf8"), jungleKey.toBuffer()],
         program.programId
       );
       const [escrow, escrowBump] = await PublicKey.findProgramAddress(
@@ -228,7 +228,7 @@ export const testUnstakeAnimal = (
 
     it("Can't unstake an unowned token", async () => {
       const [jungleAddress, jungleBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("jungle", "utf8"), jungleKey.toBuffer()],
+        [Buffer.from("staking", "utf8"), jungleKey.toBuffer()],
         program.programId
       );
       const [escrow, escrowBump] = await PublicKey.findProgramAddress(

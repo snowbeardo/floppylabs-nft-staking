@@ -11,14 +11,14 @@ pub struct SetJungle<'info> {
     )]
     pub jungle: Account<'info, Jungle>,
 
-    /// The wallet that owns the jungle
+    /// The wallet that owns the staking
     pub owner: Signer<'info>,
     
-    /// The wallet that will own the jungle
+    /// The wallet that will own the staking
     pub new_owner: AccountInfo<'info>,
 }
 
-/// Sets the jungle parameters
+/// Sets the staking parameters
 pub fn handler(
     ctx: Context<SetJungle>,
     max_rarity: u64,

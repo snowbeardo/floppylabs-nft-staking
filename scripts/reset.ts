@@ -21,9 +21,7 @@ import { MerkleTree } from "../tests/helpers/merkleTree";
 import key from "../key.json";
 import config from "../config.json";
 import { Jungle, IDL as JungleIDL } from "../target/types/jungle";
-import { Lottery, IDL as LotteryIDL } from "../target/types/lottery";
 import jungleIdl from "../target/idl/jungle.json";
-import lotteryIdl from "../target/idl/lottery.json";
 
 const factionToNumber = (faction: string) => {
   switch (faction) {
@@ -49,7 +47,7 @@ const factionToNumber = (faction: string) => {
 };
 
 /**
- * Initializes a Jungle staking and a lottery paid with staking rewards
+ * Initializes a Jungle staking
  * @param network The network to which the program is deployed
  */
 const reset = async (network: string) => {
@@ -95,20 +93,13 @@ const reset = async (network: string) => {
     jungleIdl.metadata.address,
     provider
   );
-  const lotteryProgram = new Program<Lottery>(
-    LotteryIDL,
-    lotteryIdl.metadata.address,
-    provider
-  );
 
   // EDIT THE `config.json` FILE
   const jungleKey = new PublicKey(deployments[network].jungleKey);
-  const lotteryKey = new PublicKey(deployments[network].lotteryKey);
   const totalSupply = new BN(config.totalSupply);
   const maxMultiplier = new BN(config.maxMultiplier);
   const maxRarity = new BN(config.maxRarity);
   const baseWeeklyEmissions = new BN(config.weeklyRewards).mul(new BN(10 ** 9));
-  const lotteryPeriod = new BN(config.lotteryPeriod);
   const start = new BN(config.start);
 
   const leaves = buildLeaves(
@@ -138,7 +129,6 @@ const reset = async (network: string) => {
   );
 
   console.log("Jungle key:", jungleKey.toString());
-  console.log("Lottery key:", lotteryKey.toString());
   console.log("Owner:", wallet.payer.publicKey.toString());
   console.log("Program ID:", jungleProgram.programId.toString());
   console.log("Jungle:", jungleAddress.toString());
@@ -160,26 +150,6 @@ const reset = async (network: string) => {
     }
   );
 
-  // Initialize the lottery
-  const [lotteryAddress, lotteryBump] = await PublicKey.findProgramAddress(
-    [Buffer.from("lottery", "utf8"), lotteryKey.toBuffer()],
-    lotteryProgram.programId
-  );
-
-  await lotteryProgram.rpc.setLottery(
-    start,
-    wallet.payer.publicKey,
-    mintRewards.publicKey,
-    rewards,
-    lotteryPeriod,
-    {
-      accounts: {
-        lottery: lotteryAddress,
-        owner: wallet.payer.publicKey,
-      },
-      signers: [wallet.payer],
-    }
-  );
 };
 
 reset(process.argv[2]);

@@ -58,7 +58,7 @@ export const testSetJungle = (
       const newWeekly = new BN(100000);
 
       const [jungleAddress, jungleBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("jungle"), state.jungleKey.toBuffer()],
+        [Buffer.from("staking"), state.jungleKey.toBuffer()],
         program.programId
       );
 
@@ -116,7 +116,7 @@ export const testSetJungle = (
       const newWeekly = new BN(100000);
 
       const [jungleAddress, jungleBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("jungle"), state.jungleKey.toBuffer()],
+        [Buffer.from("staking"), state.jungleKey.toBuffer()],
         program.programId
       );
 
