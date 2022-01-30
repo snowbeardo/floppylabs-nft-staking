@@ -2,47 +2,47 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount};
 
 use crate::errors::*;
-use crate::{Jungle, InitializeJungleBumps};
+use crate::{Staking, InitializeStakingBumps};
 
 #[derive(Accounts)]
-#[instruction(bumps: InitializeJungleBumps)]
-pub struct InitializeJungle<'info> {
+#[instruction(bumps: InitializeStakingBumps)]
+pub struct InitializeStaking<'info> {
     /// The unique identifier.
     /// Allows reusing this program for other projects without redeploying
-    pub jungle_key: AccountInfo<'info>,
+    pub staking_key: AccountInfo<'info>,
 
-    /// The Jungle
+    /// The Staking state account
     #[account(
         init,
         payer = owner,
         seeds = [
             b"staking",
-            jungle_key.key().as_ref()
+            staking_key.key().as_ref()
         ],
-        bump = bumps.jungle,
+        bump = bumps.staking,
     )]
-    pub jungle: Account<'info, Jungle>,
+    pub staking: Account<'info, Staking>,
 
-    /// The account holding staking tokens, staking rewards and community funds
+    /// The account owner of staking tokens, staking rewards and community funds
     #[account(
         seeds = [
             b"escrow",
-            jungle_key.key().as_ref()
+            staking_key.key().as_ref()
         ],
         bump = bumps.escrow,
     )]
     pub escrow: AccountInfo<'info>,
 
-    /// The mint of the staking token
+    /// The mint of the staking reward token
     pub mint: AccountInfo<'info>,
 
-    /// The account that will hold the exhibition token
+    /// The account that will hold the rewards token
     #[account(
         init,
         payer = owner,
         seeds = [
             b"rewards",
-            jungle_key.key().as_ref(),
+            staking_key.key().as_ref(),
             mint.key().as_ref()
         ],
         bump = bumps.rewards,
@@ -51,7 +51,7 @@ pub struct InitializeJungle<'info> {
     )]
     pub rewards_account: Account<'info, TokenAccount>,
 
-    /// The wallet owning the staking
+    /// The wallet owning the staking program
     #[account(mut)]
     pub owner: Signer<'info>,
 
@@ -65,33 +65,33 @@ pub struct InitializeJungle<'info> {
 
 /// Initializes the staking parameters
 pub fn handler(
-    ctx: Context<InitializeJungle>,
-    bumps: InitializeJungleBumps,
+    ctx: Context<InitializeStaking>,
+    bumps: InitializeStakingBumps,
     max_rarity: u64,
     max_multiplier: u64,
     base_weekly_emissions: u64,
     start: i64,
     root: [u8; 32],
 ) -> ProgramResult {
-    msg!("Init Jungle");
+    msg!("Init Staking");
     if max_multiplier < 10000 {
         return Err(ErrorCode::InvalidMultiplier.into());
     }
 
-    let jungle = &mut ctx.accounts.jungle;
-    jungle.key = ctx.accounts.jungle_key.key();
-    jungle.owner = ctx.accounts.owner.key();
-    jungle.bumps = bumps;
-    jungle.escrow = ctx.accounts.escrow.key();
-    jungle.mint = ctx.accounts.mint.key();
-    jungle.rewards_account = ctx.accounts.rewards_account.key();
-    jungle.maximum_rarity = max_rarity;
-    jungle.maximum_rarity_multiplier = max_multiplier;
-    jungle.base_weekly_emissions = base_weekly_emissions;
-    jungle.start = start;
-    jungle.root = root;
+    let staking = &mut ctx.accounts.staking;
+    staking.key = ctx.accounts.staking_key.key();
+    staking.owner = ctx.accounts.owner.key();
+    staking.bumps = bumps;
+    staking.escrow = ctx.accounts.escrow.key();
+    staking.mint = ctx.accounts.mint.key();
+    staking.rewards_account = ctx.accounts.rewards_account.key();
+    staking.maximum_rarity = max_rarity;
+    staking.maximum_rarity_multiplier = max_multiplier;
+    staking.base_weekly_emissions = base_weekly_emissions;
+    staking.start = start;
+    staking.root = root;
 
-    msg!("Jungle initialized");
+    msg!("Staking initialized");
 
     Ok(())
 }

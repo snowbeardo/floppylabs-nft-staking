@@ -27,7 +27,6 @@ module.exports = async function (provider) {
     mints.map((e, i) => ({
       mint: e.publicKey,
       rarity: i,
-      faction: i % 8,
     }))
   );
   const tree = new MerkleTree(leaves);

@@ -12,7 +12,7 @@ import {
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
 } from "@solana/web3.js";
-import { Jungle } from "../../target/types/jungle";
+import { Staking } from "../../target/types/staking";
 import {
   airdropUsers,
   assertFail,
@@ -22,12 +22,12 @@ import {
 import { Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { MerkleTree } from "../helpers/merkleTree";
 
-export const testInitializeJungle = (
+export const testInitializeStaking = (
   state: {
     owner: Keypair;
     staker: Keypair;
     mints: PublicKey[];
-    jungleKey: PublicKey;
+    stakingKey: PublicKey;
     mintRewards: Token;
     maxMultiplier: BN;
     baseWeeklyEmissions: BN;
@@ -35,10 +35,10 @@ export const testInitializeJungle = (
   },
   provider: Provider
 ) =>
-  describe("Initializing the jungle", () => {
+  describe("Test Staking initialization", () => {
     setProvider(provider);
 
-    const program = workspace.Jungle as Program<Jungle>;
+    const program = workspace.Staking as Program<Staking>;
 
     let mintRewards: Token, mints: Token[];
     let tree: MerkleTree;
@@ -48,7 +48,7 @@ export const testInitializeJungle = (
       const mintInfo = await mintAndTransferRewards(
         provider,
         program.programId,
-        state.jungleKey,
+        state.stakingKey,
         state.owner,
         604800
       );
@@ -62,33 +62,33 @@ export const testInitializeJungle = (
       tree = nfts.tree;
     });
 
-    it("Initializes the jungle", async () => {
-      const [jungleAddress, jungleBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("staking"), state.jungleKey.toBuffer()],
+    it("Initializes the staking", async () => {
+      const [stakingAddress, stakingBump] = await PublicKey.findProgramAddress(
+        [Buffer.from("staking"), state.stakingKey.toBuffer()],
         program.programId
       );
       const [escrow, escrowBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("escrow"), state.jungleKey.toBuffer()],
+        [Buffer.from("escrow"), state.stakingKey.toBuffer()],
         program.programId
       );
       const [rewards, rewardsBump] = await PublicKey.findProgramAddress(
         [
           Buffer.from("rewards"),
-          state.jungleKey.toBuffer(),
+          state.stakingKey.toBuffer(),
           mintRewards.publicKey.toBuffer(),
         ],
         program.programId
       );
 
       const bumps = {
-        jungle: jungleBump,
+        staking: stakingBump,
         escrow: escrowBump,
         rewards: rewardsBump,
       };
 
       const maximumRarity = new BN(mints.length - 1);
 
-      await program.rpc.initializeJungle(
+      await program.rpc.initializeStaking(
         bumps,
         maximumRarity,
         state.maxMultiplier,
@@ -97,8 +97,8 @@ export const testInitializeJungle = (
         tree.getRootArray(),
         {
           accounts: {
-            jungleKey: state.jungleKey,
-            jungle: jungleAddress,
+            stakingKey: state.stakingKey,
+            staking: stakingAddress,
             escrow: escrow,
             mint: mintRewards.publicKey,
             rewardsAccount: rewards,
@@ -111,7 +111,7 @@ export const testInitializeJungle = (
         }
       );
 
-      const s = await program.account.jungle.fetch(jungleAddress);
+      const s = await program.account.staking.fetch(stakingAddress);
 
       expect(s.owner.toString()).to.equal(state.owner.publicKey.toString());
       expect(s.escrow.toString()).to.equal(escrow.toString());
@@ -130,26 +130,26 @@ export const testInitializeJungle = (
     });
 
     it("Only accepts positive multipliers", async () => {
-      const jungleKey = Keypair.generate().publicKey;
-      const [jungleAddress, jungleBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("staking"), jungleKey.toBuffer()],
+      const stakingKey = Keypair.generate().publicKey;
+      const [stakingAddress, stakingBump] = await PublicKey.findProgramAddress(
+        [Buffer.from("staking"), stakingKey.toBuffer()],
         program.programId
       );
       const [escrow, escrowBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("escrow"), jungleKey.toBuffer()],
+        [Buffer.from("escrow"), stakingKey.toBuffer()],
         program.programId
       );
       const [rewards, rewardsBump] = await PublicKey.findProgramAddress(
         [
           Buffer.from("rewards"),
-          jungleKey.toBuffer(),
+          stakingKey.toBuffer(),
           mintRewards.publicKey.toBuffer(),
         ],
         program.programId
       );
 
       const bumps = {
-        jungle: jungleBump,
+        staking: stakingBump,
         escrow: escrowBump,
         rewards: rewardsBump,
       };
@@ -157,7 +157,7 @@ export const testInitializeJungle = (
       const maximumRarity = new BN(mints.length - 1);
 
       await assertFail(
-        program.rpc.initializeJungle(
+        program.rpc.initializeStaking(
           bumps,
           maximumRarity,
           new BN(9999),
@@ -166,8 +166,8 @@ export const testInitializeJungle = (
           tree.getRootArray(),
           {
             accounts: {
-              jungleKey: jungleKey,
-              jungle: jungleAddress,
+              stakingKey: stakingKey,
+              staking: stakingAddress,
               escrow: escrow,
               mint: mintRewards.publicKey,
               rewardsAccount: rewards,

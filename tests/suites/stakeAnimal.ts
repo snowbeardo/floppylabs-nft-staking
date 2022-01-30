@@ -160,7 +160,6 @@ export const testStakeAnimal = (
       expect(a.mint.toString()).to.equal(
         mints[indexStaked].publicKey.toString()
       );
-      expect(a.faction.toString()).to.equal(new BN(indexStaked).toString());
       expect(a.rarity.toString()).to.equal(new BN(indexStaked).toString());
       expect(a.lastClaim.lte(new BN(timeAfter))).to.equal(true);
       expect(a.lastClaim.gt(new BN(0))).to.equal(true);

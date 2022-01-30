@@ -1,13 +1,13 @@
-pub mod init_jungle;
-pub mod set_jungle;
+pub mod init_staking;
+pub mod set_staking;
 pub mod withdraw_rewards;
-pub mod stake_animal;
-pub mod unstake_animal;
+pub mod stake_nft;
+pub mod unstake_nft;
 pub mod claim_staking;
 
-pub use init_jungle::*;
-pub use set_jungle::*;
+pub use init_staking::*;
+pub use set_staking::*;
 pub use withdraw_rewards::*;
-pub use stake_animal::*;
-pub use unstake_animal::*;
+pub use stake_nft::*;
+pub use unstake_nft::*;
 pub use claim_staking::*;

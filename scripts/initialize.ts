@@ -23,29 +23,6 @@ import config from "../config.json";
 import { Jungle, IDL as JungleIDL } from "../target/types/jungle";
 import jungleIdl from "../target/idl/jungle.json";
 
-const factionToNumber = (faction: string) => {
-  switch (faction) {
-    case "Sarengti":
-      return 1;
-    case "Amphibian":
-      return 2;
-    case "Reptile":
-      return 3;
-    case "Misfit":
-      return 4;
-    case "Bird":
-      return 5;
-    case "Monkey":
-      return 6;
-    case "Carnivore":
-      return 7;
-    case "Mythic":
-      return 8;
-    default:
-      throw new Error("unknown faction");
-  }
-};
-
 /**
  * Initializes a Jungle staking
  * @param network The network to which the program is deployed
@@ -101,7 +78,6 @@ const initialize = async (network: string) => {
     mints.map((e, i) => ({
       mint: new PublicKey(e.mint),
       rarity: e.rarity,
-      faction: factionToNumber(e.faction),
     }))
   );
   const tree = new MerkleTree(leaves);

@@ -1,44 +1,44 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount, Transfer};
 
-use crate::Jungle;
+use crate::Staking;
 
 #[derive(Accounts)]
 pub struct WithdrawRewards<'info> {
-    /// The Jungle
+    /// The Staking state account
     #[account(
         seeds = [
             b"staking",
-            jungle.key.as_ref()
+            staking.key.as_ref()
         ],
-        bump = jungle.bumps.jungle,
+        bump = staking.bumps.staking,
         has_one = rewards_account,
     )]
-    pub jungle: Account<'info, Jungle>,
+    pub staking: Account<'info, Staking>,
 
     /// The account holding staking tokens, staking rewards and community funds
     #[account(
         mut,
         seeds = [
             b"escrow",
-            jungle.key.as_ref()
+            staking.key.as_ref()
         ],
-        bump = jungle.bumps.escrow
+        bump = staking.bumps.escrow
     )]
     pub escrow: AccountInfo<'info>,
 
-    /// The mint of the staking token
+    /// The mint of the rewards token
     pub mint: AccountInfo<'info>,
 
-    /// The account that will hold the exhibition token
+    /// The account that will holds the rewards token
     #[account(
         mut,
         seeds = [
             b"rewards".as_ref(),
-            jungle.key.as_ref(),
+            staking.key.as_ref(),
             mint.key().as_ref()
         ],
-        bump = jungle.bumps.rewards
+        bump = staking.bumps.rewards
     )]
     pub rewards_account: Account<'info, TokenAccount>,
 
@@ -60,13 +60,13 @@ pub struct WithdrawRewards<'info> {
 
 /// Lets owner withdraw some rewards from the escrow without changing the token
 pub fn handler(ctx: Context<WithdrawRewards>, amount: u64) -> ProgramResult {
-    let jungle = &ctx.accounts.jungle;
+    let staking = &ctx.accounts.staking;
 
     // Transfer all tokens left to the owner
     let seeds = &[
         b"escrow".as_ref(),
-        jungle.key.as_ref(),
-        &[jungle.bumps.escrow],
+        staking.key.as_ref(),
+        &[staking.bumps.escrow],
     ];
     let signer = &[&seeds[..]];
     let transfer_ctx = CpiContext::new_with_signer(
