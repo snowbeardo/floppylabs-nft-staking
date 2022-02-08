@@ -13,16 +13,16 @@ import {
   SYSVAR_RENT_PUBKEY,
   SYSVAR_CLOCK_PUBKEY,
 } from "@solana/web3.js";
-import { Jungle } from "../../target/types/jungle";
+import { Staking } from "../../target/types/staking";
 import { airdropUsers, assertFail, merkleCollection } from "../helpers";
 import { Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { MerkleTree } from "../helpers/merkleTree";
 
-export const testStakeAnimal = (
+export const testStakeNft = (
   state: {
     owner: Keypair;
     staker: Keypair;
-    jungleKey: PublicKey;
+    stakingKey: PublicKey;
     mintRewards: Token;
     maxMultiplier: BN;
     baseWeeklyEmissions: BN;
@@ -30,10 +30,10 @@ export const testStakeAnimal = (
   },
   provider: Provider
 ) =>
-  describe("Stake an animal", () => {
+  describe("Stake a NFT", () => {
     setProvider(provider);
 
-    const program = workspace.Jungle as Program<Jungle>;
+    const program = workspace.Staking as Program<Staking>;
 
     const n = 10;
     let mintRewards: Token,
@@ -74,12 +74,12 @@ export const testStakeAnimal = (
       );
       tree = nfts.tree;
 
-      const [jungleAddress, jungleBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("staking", "utf8"), state.jungleKey.toBuffer()],
+      const [stakingAddress, stakingBump] = await PublicKey.findProgramAddress(
+        [Buffer.from("staking", "utf8"), state.stakingKey.toBuffer()],
         program.programId
       );
 
-      await program.rpc.setJungle(
+      await program.rpc.setStaking(
         maxRarity,
         state.maxMultiplier,
         state.baseWeeklyEmissions,
@@ -87,7 +87,7 @@ export const testStakeAnimal = (
         tree.getRootArray(),
         {
           accounts: {
-            jungle: jungleAddress,
+            staking: stakingAddress,
             owner: state.owner.publicKey,
             newOwner: state.owner.publicKey,
           },
@@ -97,17 +97,17 @@ export const testStakeAnimal = (
     });
 
     it("Stake a token", async () => {
-      const [jungleAddress, jungleBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("staking", "utf8"), state.jungleKey.toBuffer()],
+      const [stakingAddress, stakingBump] = await PublicKey.findProgramAddress(
+        [Buffer.from("staking", "utf8"), state.stakingKey.toBuffer()],
         program.programId
       );
       const [escrow, escrowBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("escrow", "utf8"), state.jungleKey.toBuffer()],
+        [Buffer.from("escrow", "utf8"), state.stakingKey.toBuffer()],
         program.programId
       );
-      const [animal, animalBump] = await PublicKey.findProgramAddress(
+      const [stakedNft, stakedNftBump] = await PublicKey.findProgramAddress(
         [
-          Buffer.from("animal", "utf8"),
+          Buffer.from("staked_nft", "utf8"),
           mints[indexStaked].publicKey.toBuffer(),
         ],
         program.programId
@@ -121,20 +121,19 @@ export const testStakeAnimal = (
       );
 
       const bumps = {
-        animal: animalBump,
+        stakedNft: stakedNftBump,
         deposit: depositBump,
       };
 
-      await program.rpc.stakeAnimal(
+      await program.rpc.stakeNft(
         bumps,
         tree.getProofArray(indexStaked),
         new BN(indexStaked),
-        new BN(indexStaked % 8),
         {
           accounts: {
-            jungle: jungleAddress,
+            staking: stakingAddress,
             escrow: escrow,
-            animal: animal,
+            stakedNft: stakedNft,
             staker: holders[indexStaked].publicKey,
             mint: mints[indexStaked].publicKey,
             stakerAccount: accounts[indexStaked],
@@ -148,12 +147,12 @@ export const testStakeAnimal = (
         }
       );
 
-      const a = await program.account.animal.fetch(animal);
-      const j = await program.account.jungle.fetch(jungleAddress);
+      const a = await program.account.stakedNft.fetch(stakedNft);
+      const j = await program.account.staking.fetch(stakingAddress);
 
       const timeAfter = Date.now() / 1000;
 
-      expect(j.animalsStaked.toString()).to.equal(new BN(1).toString());
+      expect(j.nftsStaked.toString()).to.equal(new BN(1).toString());
       expect(a.staker.toString()).to.equal(
         holders[indexStaked].publicKey.toString()
       );
@@ -166,12 +165,12 @@ export const testStakeAnimal = (
     });
 
     it("Fails when it's too early", async () => {
-      const [jungleAddress, jungleBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("staking", "utf8"), state.jungleKey.toBuffer()],
+      const [stakingAddress, stakingBump] = await PublicKey.findProgramAddress(
+        [Buffer.from("staking", "utf8"), state.stakingKey.toBuffer()],
         program.programId
       );
 
-      await program.rpc.setJungle(
+      await program.rpc.setStaking(
         maxRarity,
         state.maxMultiplier,
         state.baseWeeklyEmissions,
@@ -179,7 +178,7 @@ export const testStakeAnimal = (
         tree.getRootArray(),
         {
           accounts: {
-            jungle: jungleAddress,
+            staking: stakingAddress,
             owner: state.owner.publicKey,
             newOwner: state.owner.publicKey,
           },
@@ -188,12 +187,12 @@ export const testStakeAnimal = (
       );
 
       const [escrow, escrowBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("escrow", "utf8"), state.jungleKey.toBuffer()],
+        [Buffer.from("escrow", "utf8"), state.stakingKey.toBuffer()],
         program.programId
       );
-      const [animal, animalBump] = await PublicKey.findProgramAddress(
+      const [stakedNft, stakedNftBump] = await PublicKey.findProgramAddress(
         [
-          Buffer.from("animal", "utf8"),
+          Buffer.from("staked_nft", "utf8"),
           mints[indexStaked].publicKey.toBuffer(),
         ],
         program.programId
@@ -207,20 +206,19 @@ export const testStakeAnimal = (
       );
 
       const bumps = {
-        animal: animalBump,
+        stakedNft: stakedNftBump,
         deposit: depositBump,
       };
 
-      await assertFail(program.rpc.stakeAnimal(
+      await assertFail(program.rpc.stakeNft(
         bumps,
         tree.getProofArray(indexStaked),
         new BN(indexStaked),
-        new BN(indexStaked % 8),
         {
           accounts: {
-            jungle: jungleAddress,
+            staking: stakingAddress,
             escrow: escrow,
-            animal: animal,
+            stakedNft: stakedNft,
             staker: holders[indexStaked].publicKey,
             mint: mints[indexStaked].publicKey,
             stakerAccount: accounts[indexStaked],
@@ -234,8 +232,8 @@ export const testStakeAnimal = (
         }
       ));
 
-      // Reset the jungle
-      await program.rpc.setJungle(
+      // Reset the staking
+      await program.rpc.setStaking(
         maxRarity,
         state.maxMultiplier,
         state.baseWeeklyEmissions,
@@ -243,7 +241,7 @@ export const testStakeAnimal = (
         tree.getRootArray(),
         {
           accounts: {
-            jungle: jungleAddress,
+            staking: stakingAddress,
             owner: state.owner.publicKey,
             newOwner: state.owner.publicKey,
           },
@@ -253,17 +251,17 @@ export const testStakeAnimal = (
     });
 
     it("Can't stake an unowned token", async () => {
-      const [jungleAddress, jungleBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("staking", "utf8"), state.jungleKey.toBuffer()],
+      const [stakingAddress, stakingBump] = await PublicKey.findProgramAddress(
+        [Buffer.from("staking", "utf8"), state.stakingKey.toBuffer()],
         program.programId
       );
       const [escrow, escrowBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("escrow", "utf8"), state.jungleKey.toBuffer()],
+        [Buffer.from("escrow", "utf8"), state.stakingKey.toBuffer()],
         program.programId
       );
-      const [animal, animalBump] = await PublicKey.findProgramAddress(
+      const [stakedNft, stakedNftBump] = await PublicKey.findProgramAddress(
         [
-          Buffer.from("animal", "utf8"),
+          Buffer.from("staked_nft", "utf8"),
           mints[indexStaked].publicKey.toBuffer(),
         ],
         program.programId
@@ -277,7 +275,7 @@ export const testStakeAnimal = (
       );
 
       const bumps = {
-        animal: animalBump,
+        stakedNft: stakedNftBump,
         deposit: depositBump,
       };
 
@@ -286,16 +284,15 @@ export const testStakeAnimal = (
       ].getOrCreateAssociatedAccountInfo(stranger.publicKey);
 
       await assertFail(
-        program.rpc.stakeAnimal(
+        program.rpc.stakeNft(
           bumps,
           tree.getProofArray(indexStaked),
           new BN(indexStaked),
-          new BN(indexStaked),
           {
             accounts: {
-              jungle: jungleAddress,
+              staking: stakingAddress,
               escrow: escrow,
-              animal: animal,
+              stakedNft: stakedNft,
               staker: stranger.publicKey,
               mint: mints[indexStaked].publicKey,
               stakerAccount: stakerAccount.address,

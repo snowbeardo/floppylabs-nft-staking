@@ -15,9 +15,9 @@ import {
 } from "./helpers";
 import { testClaimRewards } from "./suites/claimRewards";
 import { testInitializeStaking } from "./suites/initStaking";
-import { testSetJungle } from "./suites/setJungle";
-import { testStakeAnimal } from "./suites/stakeAnimal";
-import { testUnstakeAnimal } from "./suites/unstakeAnimal";
+import { testSetStaking } from "./suites/setStaking";
+import { testStakeNft } from "./suites/stakeNft";
+import { testUnstakeNft } from "./suites/unstakeNft";
 import { testWithdrawRewards } from "./suites/withdrawRewards";
 
 describe("Staking Tests Suite", () => {
@@ -64,9 +64,9 @@ describe("Staking Tests Suite", () => {
   });
 
   testInitializeStaking(state, provider);
-  //testSetJungle(state, provider);
-  //testWithdrawRewards(state, provider);
-  //testStakeAnimal(state, provider);
-  //testUnstakeAnimal(state, provider);
-  //testClaimRewards(state, provider);
+  testSetStaking(state, provider);
+  testWithdrawRewards(state, provider);
+  testStakeNft(state, provider);
+  testUnstakeNft(state, provider);
+  testClaimRewards(state, provider);
 });
