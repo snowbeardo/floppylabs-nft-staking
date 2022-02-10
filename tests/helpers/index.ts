@@ -138,7 +138,7 @@ export const buildLeaves = (
 export const mintAndTransferRewards = async (
   provider: Provider,
   programId: web3.PublicKey,
-  jungleKey: web3.PublicKey,
+  stakingKey: web3.PublicKey,
   owner: web3.Signer,
   amount: number
 ) => {
@@ -151,11 +151,11 @@ export const mintAndTransferRewards = async (
     TOKEN_PROGRAM_ID
   );
   const [escrow, escrowBump] = await web3.PublicKey.findProgramAddress(
-    [Buffer.from("escrow"), jungleKey.toBuffer()],
+    [Buffer.from("escrow"), stakingKey.toBuffer()],
     programId
   );
   const [rewardsAccount, rewardsBump] = await web3.PublicKey.findProgramAddress(
-    [Buffer.from("rewards"), jungleKey.toBuffer(), mint.publicKey.toBuffer()],
+    [Buffer.from("rewards"), stakingKey.toBuffer(), mint.publicKey.toBuffer()],
     programId
   );
   const ownerAccount = await mint.getOrCreateAssociatedAccountInfo(

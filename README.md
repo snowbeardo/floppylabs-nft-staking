@@ -17,7 +17,7 @@ The Staking module lets holders of the a given NFTs deposit their tokens in a pr
 
 ### As an admin
 
-The owner of the Jungle can withdraw staking rewards at any time using the `rpc.withdrawRewards` method. This allows migrating to a new program or using rewards for the team's operations. Attention, THE OWNER CAN WITHDRAW ALL REWARDS at any time. This means that staking rewards can stop and the owners can dump the tokens as long as there is an owner. (to be reviewed)
+The owner of the Staking can withdraw staking rewards at any time using the `rpc.withdrawRewards` method. This allows migrating to a new program or using rewards for the team's operations. Attention, THE OWNER CAN WITHDRAW ALL REWARDS at any time. This means that staking rewards can stop and the owners can dump the tokens as long as there is an owner. (to be reviewed)
 
 ### As a developer
 

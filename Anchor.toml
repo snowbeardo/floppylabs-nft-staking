@@ -1,5 +1,5 @@
 [programs.localnet]
-jungle = "8XgPs7DNb7jvZqu5Y6zbF1idvrXnLtHZK4kVGKALd9fS"
+staking = "8XgPs7DNb7jvZqu5Y6zbF1idvrXnLtHZK4kVGKALd9fS"
 
 [registry]
 url = "https://anchor.projectserum.com"

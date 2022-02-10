@@ -63,10 +63,10 @@ describe("Staking Tests Suite", () => {
      state.tree = nfts.tree;
   });
 
-  //testInitializeStaking(state, provider);
-  //testSetStaking(state, provider);
-  //testWithdrawRewards(state, provider);
-  //testStakeNft(state, provider);
-  //testUnstakeNft(state, provider);
+  testInitializeStaking(state, provider);
+  testSetStaking(state, provider);
+  testWithdrawRewards(state, provider);
+  testStakeNft(state, provider);
+  testUnstakeNft(state, provider);
   testClaimRewards(state, provider);
 });
