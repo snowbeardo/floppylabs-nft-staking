@@ -284,12 +284,6 @@ export const testClaimRewards = (
         .amount;
       const rewardsGiven = rewardsBefore.sub(rewardsAfter);
 
-      console.log("Before");
-      console.log(rewardsBefore.toString());
-      console.log("After");
-      console.log(rewardsAfter.toString());
-
-
       // The rewards have been transferred to the staker
       expect(stakerAccountAfter.amount.toString()).to.equal(
         stakerAccount.amount.add(rewardsGiven).toString()
@@ -301,18 +295,15 @@ export const testClaimRewards = (
         state.maxMultiplier
           .sub(new BN(10000))
           .mul(new BN(indexStaked))
-          .div(new BN(n - 1))
+          .div(new BN(n))
       );
-
-      console.log("Rarity mult");
-      console.log(rarityMultiplier.toString());
 
       expect(rewardsGiven.toString()).to.equal(
         state.baseWeeklyEmissions
           .mul(elapsed)
           .div(new BN(604800))
           .mul(rarityMultiplier)
-          .div(j.nftsStaked)
+          //.div(j.nftsStaked)
           .div(new BN(10000))
           .toString()
       );
