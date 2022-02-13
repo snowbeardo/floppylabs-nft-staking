@@ -20,34 +20,11 @@ import { MerkleTree } from "../tests/helpers/merkleTree";
 
 import key from "../key.json";
 import config from "../config.json";
-import { Jungle, IDL as JungleIDL } from "../target/types/jungle";
-import jungleIdl from "../target/idl/jungle.json";
-
-const factionToNumber = (faction: string) => {
-  switch (faction) {
-    case "Sarengti":
-      return 1;
-    case "Amphibian":
-      return 2;
-    case "Reptile":
-      return 3;
-    case "Misfit":
-      return 4;
-    case "Bird":
-      return 5;
-    case "Monkey":
-      return 6;
-    case "Carnivore":
-      return 7;
-    case "Mythic":
-      return 8;
-    default:
-      throw new Error("unknown faction");
-  }
-};
+import { Staking, IDL as StakingIDL } from "../target/types/staking";
+import stakingIdl from "../target/idl/staking.json";
 
 /**
- * Initializes a Jungle staking
+ * Sets an already existing Staking
  * @param network The network to which the program is deployed
  */
 const reset = async (network: string) => {
@@ -80,22 +57,22 @@ const reset = async (network: string) => {
   if (!Object.keys(deployments).includes(network))
     throw new Error("No previous deployments for this network");
 
-  // Create the reward token
+  // Gets the reward token
   const mintRewards = new Token(
     connection,
-    new PublicKey(deployments[network].jungleRewardMint),
+    new PublicKey(deployments[network].stakingRewardMint),
     TOKEN_PROGRAM_ID,
     wallet.payer
   );
 
-  const jungleProgram = new Program<Jungle>(
-    JungleIDL,
-    jungleIdl.metadata.address,
+  const stakingProgram = new Program<Staking>(
+    StakingIDL,
+    stakingIdl.metadata.address,
     provider
   );
 
   // EDIT THE `config.json` FILE
-  const jungleKey = new PublicKey(deployments[network].jungleKey);
+  const stakingKey = new PublicKey(deployments[network].stakingKey);
   const totalSupply = new BN(config.totalSupply);
   const maxMultiplier = new BN(config.maxMultiplier);
   const maxRarity = new BN(config.maxRarity);
@@ -106,35 +83,34 @@ const reset = async (network: string) => {
     mints.map((e, i) => ({
       mint: new PublicKey(e.mint),
       rarity: e.rarity,
-      faction: factionToNumber(e.faction),
     }))
   );
   const tree = new MerkleTree(leaves);
 
-  const [jungleAddress, jungleBump] = await PublicKey.findProgramAddress(
-    [Buffer.from("jungle", "utf8"), jungleKey.toBuffer()],
-    jungleProgram.programId
+  const [stakingAddress, stakingBump] = await PublicKey.findProgramAddress(
+    [Buffer.from("staking", "utf8"), stakingKey.toBuffer()],
+    stakingProgram.programId
   );
   const [escrow, escrowBump] = await PublicKey.findProgramAddress(
-    [Buffer.from("escrow", "utf8"), jungleKey.toBuffer()],
-    jungleProgram.programId
+    [Buffer.from("escrow", "utf8"), stakingKey.toBuffer()],
+    stakingProgram.programId
   );
   const [rewards, rewardsBump] = await PublicKey.findProgramAddress(
     [
       Buffer.from("rewards", "utf8"),
-      jungleKey.toBuffer(),
+      stakingKey.toBuffer(),
       mintRewards.publicKey.toBuffer(),
     ],
-    jungleProgram.programId
+    stakingProgram.programId
   );
 
-  console.log("Jungle key:", jungleKey.toString());
+  console.log("Staking key:", stakingKey.toString());
   console.log("Owner:", wallet.payer.publicKey.toString());
-  console.log("Program ID:", jungleProgram.programId.toString());
-  console.log("Jungle:", jungleAddress.toString());
+  console.log("Program ID:", stakingProgram.programId.toString());
+  console.log("Staking:", stakingAddress.toString());
   console.log("Escrow:", escrow.toString());
 
-  await jungleProgram.rpc.setJungle(
+  await stakingProgram.rpc.setStaking(
     maxRarity,
     maxMultiplier,
     baseWeeklyEmissions,
@@ -142,7 +118,7 @@ const reset = async (network: string) => {
     tree.getRootArray(),
     {
       accounts: {
-        jungle: jungleAddress,
+        staking: stakingAddress,
         owner: wallet.payer.publicKey,
         newOwner: wallet.payer.publicKey,
       },

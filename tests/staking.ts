@@ -7,24 +7,24 @@ import {
 } from "@project-serum/anchor";
 import { Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { Keypair } from "@solana/web3.js";
-import { Jungle } from "../target/types/jungle";
+import { Staking } from "../target/types/staking";
 import {
   airdropUsers,
   merkleCollection,
   mintAndTransferRewards,
 } from "./helpers";
 import { testClaimRewards } from "./suites/claimRewards";
-import { testInitializeJungle } from "./suites/initJungle";
-import { testSetJungle } from "./suites/setJungle";
-import { testStakeAnimal } from "./suites/stakeAnimal";
-import { testUnstakeAnimal } from "./suites/unstakeAnimal";
+import { testInitializeStaking } from "./suites/initStaking";
+import { testSetStaking } from "./suites/setStaking";
+import { testStakeNft } from "./suites/stakeNft";
+import { testUnstakeNft } from "./suites/unstakeNft";
 import { testWithdrawRewards } from "./suites/withdrawRewards";
 
-describe("jungle", () => {
+describe("Staking Tests Suite", () => {
   const provider = Provider.local();
   setProvider(provider);
 
-  const program = workspace.Jungle as Program<Jungle>;
+  const program = workspace.Staking as Program<Staking>;
 
   const state = {
     owner: Keypair.generate(),
@@ -32,7 +32,7 @@ describe("jungle", () => {
     numberOfNfts: 10,
     mints: [],
     tree: undefined,
-    jungleKey: Keypair.generate().publicKey,
+    stakingKey: Keypair.generate().publicKey,
     mintRewards: new Token(
       provider.connection,
       Keypair.generate().publicKey,
@@ -49,7 +49,7 @@ describe("jungle", () => {
      const mintInfo = await mintAndTransferRewards(
        provider,
        program.programId,
-       state.jungleKey,
+       state.stakingKey,
        state.owner,
        604800
      );
@@ -63,10 +63,10 @@ describe("jungle", () => {
      state.tree = nfts.tree;
   });
 
-  //testInitializeJungle(state, provider);
-  //testSetJungle(state, provider);
-  //testWithdrawRewards(state, provider);
-  //testStakeAnimal(state, provider);
-  //testUnstakeAnimal(state, provider);
+  testInitializeStaking(state, provider);
+  testSetStaking(state, provider);
+  testWithdrawRewards(state, provider);
+  testStakeNft(state, provider);
+  testUnstakeNft(state, provider);
   testClaimRewards(state, provider);
 });

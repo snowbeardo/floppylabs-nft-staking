@@ -7,9 +7,7 @@
         "reset:mainnet": "ts-node scripts/reset.ts mainnet",
         "reset:devnet": "ts-node scripts/reset.ts devnet",
         "transfer:mainnet": "ts-node scripts/transferRewards.ts https://api.mainnet-beta.solana.com 4000000000000000",
-        "transfer:devnet": "ts-node scripts/transferRewards.ts https://api.devnet.solana.com 4000000000000000",
-        "pot:mainnet": "ts-node scripts/transferPot.ts https://api.mainnet-beta.solana.com 1000000000",
-        "pot:devnet": "ts-node scripts/transferPot.ts https://api.devnet.solana.com 1000000000"
+        "transfer:devnet": "ts-node scripts/transferRewards.ts https://api.devnet.solana.com 4000000000000000"
     },
     "dependencies": {
         "@project-serum/anchor": "^0.18.2",

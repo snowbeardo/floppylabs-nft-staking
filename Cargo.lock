@@ -624,17 +624,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "jungle"
-version = "0.1.0"
-dependencies = [
- "anchor-lang",
- "anchor-spl",
- "pyth-client",
- "solana-program",
- "thiserror",
-]
-
-[[package]]
 name = "keccak"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1158,6 +1147,17 @@ dependencies = [
  "num-derive",
  "num-traits",
  "num_enum",
+ "solana-program",
+ "thiserror",
+]
+
+[[package]]
+name = "staking"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "pyth-client",
  "solana-program",
  "thiserror",
 ]

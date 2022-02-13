@@ -12,16 +12,16 @@ import {
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
 } from "@solana/web3.js";
-import { Jungle } from "../../target/types/jungle";
+import { Staking } from "../../target/types/staking";
 import { airdropUsers, assertFail, merkleCollection } from "../helpers";
 import { Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { MerkleTree } from "../helpers/merkleTree";
 
-export const testSetJungle = (
+export const testSetStaking = (
   state: {
     owner: Keypair;
     staker: Keypair;
-    jungleKey: PublicKey;
+    stakingKey: PublicKey;
     mintRewards: Token;
     maxMultiplier: BN;
     baseWeeklyEmissions: BN;
@@ -29,10 +29,10 @@ export const testSetJungle = (
   },
   provider: Provider
 ) =>
-  describe("Setting the jungle", () => {
+  describe("Setting the Staking", () => {
     setProvider(provider);
 
-    const program = workspace.Jungle as Program<Jungle>;
+    const program = workspace.Staking as Program<Staking>;
 
     let mintRewards: Token, mints: Token[];
     let tree: MerkleTree;
@@ -52,20 +52,20 @@ export const testSetJungle = (
       tree = nfts.tree;
     });
 
-    it("Reset the jungle", async () => {
+    it("Reset the Staking", async () => {
       const newOwner = Keypair.generate();
       const newMaximumMultiplier = new BN(100000);
       const newWeekly = new BN(100000);
 
-      const [jungleAddress, jungleBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("staking"), state.jungleKey.toBuffer()],
+      const [stakingAddress, stakingBump] = await PublicKey.findProgramAddress(
+        [Buffer.from("staking"), state.stakingKey.toBuffer()],
         program.programId
       );
 
       const maximumRarity = new BN(mints.length - 1);
       const newMaximumRarity = new BN(mints.length + 100);
 
-      await program.rpc.setJungle(
+      await program.rpc.setStaking(
         newMaximumRarity,
         newMaximumMultiplier,
         newWeekly,
@@ -73,7 +73,7 @@ export const testSetJungle = (
         tree.getRootArray(),
         {
           accounts: {
-            jungle: jungleAddress,
+            staking: stakingAddress,
             owner: state.owner.publicKey,
             newOwner: newOwner.publicKey,
           },
@@ -81,7 +81,7 @@ export const testSetJungle = (
         }
       );
 
-      const s = await program.account.jungle.fetch(jungleAddress);
+      const s = await program.account.staking.fetch(stakingAddress);
 
       expect(s.owner.toString()).to.equal(newOwner.publicKey.toString());
       expect(s.maximumRarity.toString()).to.equal(newMaximumRarity.toString());
@@ -93,7 +93,7 @@ export const testSetJungle = (
         tree.getRoot().toJSON().data.toString()
       );
 
-      await program.rpc.setJungle(
+      await program.rpc.setStaking(
         maximumRarity,
         state.maxMultiplier,
         state.baseWeeklyEmissions,
@@ -101,7 +101,7 @@ export const testSetJungle = (
         tree.getRootArray(),
         {
           accounts: {
-            jungle: jungleAddress,
+            staking: stakingAddress,
             owner: newOwner.publicKey,
             newOwner: state.owner.publicKey,
           },
@@ -115,22 +115,22 @@ export const testSetJungle = (
       const newMaximumMultiplier = new BN(100000);
       const newWeekly = new BN(100000);
 
-      const [jungleAddress, jungleBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("staking"), state.jungleKey.toBuffer()],
+      const [stakingAddress, stakingBump] = await PublicKey.findProgramAddress(
+        [Buffer.from("staking"), state.stakingKey.toBuffer()],
         program.programId
       );
 
       const newMaximumRarity = new BN(mints.length + 10);
 
       await assertFail(
-        program.rpc.setJungle(
+        program.rpc.setStaking(
           newMaximumRarity,
           newMaximumMultiplier,
           newWeekly,
           tree.getRootArray(),
           {
             accounts: {
-              jungle: jungleAddress,
+              staking: stakingAddress,
               owner: newOwner.publicKey,
               newOwner: newOwner.publicKey,
             },

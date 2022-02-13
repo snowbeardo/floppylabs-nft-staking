@@ -13,8 +13,8 @@ import { PublicKey } from "@solana/web3.js";
 
 import key from "../key.json";
 import deployment from "../deployment.json";
-import { Jungle, IDL as JungleIDL } from "../target/types/jungle";
-import jungleIdl from "../target/idl/jungle.json";
+import { Staking, IDL as StakingIDL } from "../target/types/staking";
+import stakingIdl from "../target/idl/staking.json";
 
 const transferRewards = async (endpoint: string, amount: string) => {
   if (!endpoint) throw new Error("Missing endpoint argument");
@@ -26,26 +26,26 @@ const transferRewards = async (endpoint: string, amount: string) => {
   });
   setProvider(provider);
 
-  const jungleProgram = new Program<Jungle>(
-    JungleIDL,
-    jungleIdl.metadata.address,
+  const stakingProgram = new Program<Staking>(
+    StakingIDL,
+    stakingIdl.metadata.address,
     provider
   );
 
-  const [jungleAddress] = await PublicKey.findProgramAddress(
+  const [stakingAddress] = await PublicKey.findProgramAddress(
     [
-      Buffer.from("jungle", "utf8"),
-      new PublicKey(deployment.jungleKey).toBuffer(),
+      Buffer.from("staking", "utf8"),
+      new PublicKey(deployment.stakingKey).toBuffer(),
     ],
-    jungleProgram.programId
+    stakingProgram.programId
   );
 
-  const jungle = await jungleProgram.account.jungle.fetch(jungleAddress);
+  const staking = await stakingProgram.account.staking.fetch(stakingAddress);
 
   // Transfer the reward token
   const mintRewards = new Token(
     connection,
-    jungle.mint,
+    staking.mint,
     TOKEN_PROGRAM_ID,
     wallet.payer
   );
@@ -54,7 +54,7 @@ const transferRewards = async (endpoint: string, amount: string) => {
   );
   await mintRewards.transfer(
     ownerAccount.address,
-    jungle.rewardsAccount,
+    staking.rewardsAccount,
     wallet.payer,
     [],
     new BN(amount).toNumber()

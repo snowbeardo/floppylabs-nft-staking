@@ -1,15 +1,15 @@
 use anchor_lang::prelude::*;
 
-use crate::{errors::ErrorCode, Jungle};
+use crate::{errors::ErrorCode, Staking};
 
 #[derive(Accounts)]
-pub struct SetJungle<'info> {
-    /// The Jungle
+pub struct SetStaking<'info> {
+    /// The Staking state account
     #[account(
         mut,
         has_one = owner,
     )]
-    pub jungle: Account<'info, Jungle>,
+    pub staking: Account<'info, Staking>,
 
     /// The wallet that owns the staking
     pub owner: Signer<'info>,
@@ -20,7 +20,7 @@ pub struct SetJungle<'info> {
 
 /// Sets the staking parameters
 pub fn handler(
-    ctx: Context<SetJungle>,
+    ctx: Context<SetStaking>,
     max_rarity: u64,
     max_multiplier: u64,
     base_weekly_emissions: u64,
@@ -31,15 +31,15 @@ pub fn handler(
         return Err(ErrorCode::InvalidMultiplier.into())
     }
 
-    let jungle = &mut ctx.accounts.jungle;
-    jungle.owner = ctx.accounts.new_owner.key();
-    jungle.maximum_rarity = max_rarity;
-    jungle.maximum_rarity_multiplier = max_multiplier;
-    jungle.base_weekly_emissions = base_weekly_emissions;
-    jungle.start = start;
-    jungle.root = root;
+    let staking = &mut ctx.accounts.staking;
+    staking.owner = ctx.accounts.new_owner.key();
+    staking.maximum_rarity = max_rarity;
+    staking.maximum_rarity_multiplier = max_multiplier;
+    staking.base_weekly_emissions = base_weekly_emissions;
+    staking.start = start;
+    staking.root = root;
 
-    msg!("Jungle set");
+    msg!("Staking set");
 
     Ok(())
 }

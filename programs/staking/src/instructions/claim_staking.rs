@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount, Transfer};
 
-use crate::{Jungle, Animal};
+use crate::{Staking, StakedNft};
 
 #[derive(Accounts)]
 pub struct ClaimStaking<'info> {
@@ -9,36 +9,36 @@ pub struct ClaimStaking<'info> {
     #[account(
         seeds = [
             b"staking",
-            jungle.key.as_ref()
+            staking.key.as_ref()
         ],
-        bump = jungle.bumps.jungle,
+        bump = staking.bumps.staking,
         has_one = mint,
         has_one = rewards_account
     )]
-    pub jungle: Account<'info, Jungle>,
+    pub staking: Account<'info, Staking>,
 
     /// The account holding staking tokens, staking rewards and community funds
     #[account(
         mut,
         seeds = [
             b"escrow",
-            jungle.key.as_ref()
+            staking.key.as_ref()
         ],
-        bump = jungle.bumps.escrow
+        bump = staking.bumps.escrow
     )]
     pub escrow: AccountInfo<'info>,
 
-    /// The staking account
+    /// The account representing the staked NFT
     #[account(
         mut,
         seeds = [
-            b"animal".as_ref(),
-            animal.mint.as_ref()
+            b"staked_nft".as_ref(),
+            staked_nft.mint.as_ref()
         ],
-        bump = animal.bumps.animal,
+        bump = staked_nft.bumps.staked_nft,
         has_one = staker
     )]
-    pub animal: Account<'info, Animal>,
+    pub staked_nft: Account<'info, StakedNft>,
 
     /// The owner of the staked token
     #[account(mut)]
@@ -57,15 +57,15 @@ pub struct ClaimStaking<'info> {
     )]
     pub staker_account: Account<'info, TokenAccount>,
 
-    /// The account that will hold the token being staked
+    /// The account that will hold the rewards token
     #[account(
         mut,
         seeds = [
             b"rewards",
-            jungle.key.as_ref(),
-            jungle.mint.as_ref()
+            staking.key.as_ref(),
+            staking.mint.as_ref()
         ],
-        bump = jungle.bumps.rewards,
+        bump = staking.bumps.rewards,
     )]
     pub rewards_account: Account<'info, TokenAccount>,
 
@@ -82,21 +82,21 @@ pub struct ClaimStaking<'info> {
 
 /// Claims rewards for a staked token
 pub fn handler(ctx: Context<ClaimStaking>) -> ProgramResult {
-    let jungle = &ctx.accounts.jungle;
-    let animal = &mut ctx.accounts.animal;
+    let staking = &ctx.accounts.staking;
+    let staked_nft = &mut ctx.accounts.staked_nft;
 
-    let rarity = if animal.rarity <= jungle.maximum_rarity { animal.rarity } else { jungle.maximum_rarity };
-    let multiplier = 10000 + (jungle.maximum_rarity_multiplier - 10000) * rarity / jungle.maximum_rarity;
-    let seconds_elapsed = ctx.accounts.clock.unix_timestamp - animal.last_claim;
-    let weekly_emissions = jungle.base_weekly_emissions * multiplier / 10000;
+    let rarity = if staked_nft.rarity <= staking.maximum_rarity { staked_nft.rarity } else { staking.maximum_rarity };
+    let multiplier = 10000 + (staking.maximum_rarity_multiplier - 10000) * rarity / staking.maximum_rarity;
+    let seconds_elapsed = ctx.accounts.clock.unix_timestamp - staked_nft.last_claim;
+    let weekly_emissions = staking.base_weekly_emissions * multiplier / 10000;
     let rewards_amount = weekly_emissions * (seconds_elapsed as u64) / 604800;
     
-    animal.last_claim = ctx.accounts.clock.unix_timestamp;
+    staked_nft.last_claim = ctx.accounts.clock.unix_timestamp;
 
     let seeds = &[
         b"escrow".as_ref(),
-        jungle.key.as_ref(),
-        &[jungle.bumps.escrow],
+        staking.key.as_ref(),
+        &[staking.bumps.escrow],
     ];
     let signer = &[&seeds[..]];
 

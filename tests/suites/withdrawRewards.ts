@@ -12,7 +12,7 @@ import {
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
 } from "@solana/web3.js";
-import { Jungle } from "../../target/types/jungle";
+import { Staking } from "../../target/types/staking";
 import { airdropUsers, assertFail, merkleCollection } from "../helpers";
 import { Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { MerkleTree } from "../helpers/merkleTree";
@@ -21,7 +21,7 @@ export const testWithdrawRewards = (
   state: {
     owner: Keypair;
     staker: Keypair;
-    jungleKey: PublicKey;
+    stakingKey: PublicKey;
     mintRewards: Token;
     maxMultiplier: BN;
     baseWeeklyEmissions: BN;
@@ -32,7 +32,7 @@ export const testWithdrawRewards = (
   describe("Withdraw rewards", () => {
     setProvider(provider);
 
-    const program = workspace.Jungle as Program<Jungle>;
+    const program = workspace.Staking as Program<Staking>;
 
     const n = 10;
     let mintRewards: Token,
@@ -40,12 +40,12 @@ export const testWithdrawRewards = (
       holders: Keypair[],
       accounts: PublicKey[] = Array(n).fill(new PublicKey(0));
     let tree: MerkleTree;
-    let jungleKey: PublicKey, owner: Keypair, stranger: Keypair;
+    let stakingKey: PublicKey, owner: Keypair, stranger: Keypair;
 
     const startingAmount = new BN(10 ** 10);
 
     beforeEach(async () => {
-      jungleKey = Keypair.generate().publicKey;
+      stakingKey = Keypair.generate().publicKey;
       owner = Keypair.generate();
       stranger = Keypair.generate();
 
@@ -76,30 +76,30 @@ export const testWithdrawRewards = (
       );
       tree = nfts.tree;
 
-      const [jungleAddress, jungleBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("staking"), jungleKey.toBuffer()],
+      const [stakingAddress, stakingBump] = await PublicKey.findProgramAddress(
+        [Buffer.from("staking"), stakingKey.toBuffer()],
         program.programId
       );
       const [escrow, escrowBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("escrow"), jungleKey.toBuffer()],
+        [Buffer.from("escrow"), stakingKey.toBuffer()],
         program.programId
       );
       const [rewards, rewardsBump] = await PublicKey.findProgramAddress(
         [
           Buffer.from("rewards"),
-          jungleKey.toBuffer(),
+          stakingKey.toBuffer(),
           mintRewards.publicKey.toBuffer(),
         ],
         program.programId
       );
 
       const bumpsInit = {
-        jungle: jungleBump,
+        staking: stakingBump,
         escrow: escrowBump,
         rewards: rewardsBump,
       };
 
-      await program.rpc.initializeJungle(
+      await program.rpc.initializeStaking(
         bumpsInit,
         new BN(10),
         state.maxMultiplier,
@@ -108,8 +108,8 @@ export const testWithdrawRewards = (
         tree.getRootArray(),
         {
           accounts: {
-            jungleKey: jungleKey,
-            jungle: jungleAddress,
+            stakingKey: stakingKey,
+            staking: stakingAddress,
             escrow: escrow,
             mint: mintRewards.publicKey,
             rewardsAccount: rewards,
@@ -122,23 +122,23 @@ export const testWithdrawRewards = (
         }
       );
 
-      // Mint tokens to the jungle
+      // Mint tokens to the staking
       await mintRewards.mintTo(rewards, owner, [], startingAmount.toNumber());
     });
 
     it("Withdraw rewards", async () => {
-      const [jungleAddress, jungleBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("staking"), jungleKey.toBuffer()],
+      const [stakingAddress, stakingBump] = await PublicKey.findProgramAddress(
+        [Buffer.from("staking"), stakingKey.toBuffer()],
         program.programId
       );
       const [escrow, escrowBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("escrow", "utf8"), jungleKey.toBuffer()],
+        [Buffer.from("escrow", "utf8"), stakingKey.toBuffer()],
         program.programId
       );
       const [rewards, rewardsBump] = await PublicKey.findProgramAddress(
         [
           Buffer.from("rewards"),
-          jungleKey.toBuffer(),
+          stakingKey.toBuffer(),
           mintRewards.publicKey.toBuffer(),
         ],
         program.programId
@@ -152,7 +152,7 @@ export const testWithdrawRewards = (
 
       await program.rpc.withdrawRewards(withdraw, {
         accounts: {
-          jungle: jungleAddress,
+          staking: stakingAddress,
           escrow: escrow,
           mint: mintRewards.publicKey,
           rewardsAccount: rewards,

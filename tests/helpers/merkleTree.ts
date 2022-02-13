@@ -2,14 +2,14 @@ import { BN, web3 } from "@project-serum/anchor";
 import { keccak_256 } from "js-sha3";
 
 export class MerkleTree {
-  leafs: Array<Buffer>;
+  leaves: Array<Buffer>;
   layers: Array<Array<Buffer>>;
 
-  constructor(leafs: Array<Buffer>) {
-    this.leafs = leafs.slice();
+  constructor(leaves: Array<Buffer>) {
+    this.leaves = leaves.slice();
     this.layers = [];
 
-    let hashes = this.leafs.map(MerkleTree.nodeHash);
+    let hashes = this.leaves.map(MerkleTree.nodeHash);
     while (hashes.length > 0) {
       this.layers.push(hashes.slice());
       if (hashes.length === 1) break;
@@ -80,7 +80,7 @@ export class MerkleTree {
   }
 
   verifyProof(idx: number, proof: Buffer[], root: Buffer): boolean {
-    let pair = MerkleTree.nodeHash(this.leafs[idx]);
+    let pair = MerkleTree.nodeHash(this.leaves[idx]);
     for (const item of proof) {
       pair = MerkleTree.internalHash(pair, item);
     }

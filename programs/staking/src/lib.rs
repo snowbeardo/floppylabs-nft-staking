@@ -11,20 +11,21 @@ use instructions::*;
 declare_id!("8XgPs7DNb7jvZqu5Y6zbF1idvrXnLtHZK4kVGKALd9fS");
 
 #[program]
-mod jungle {
+mod staking {
+    use crate::instructions::unstake_nft::UnstakeNft;
     use super::*;
 
     /// Initializes the staking
-    pub fn initialize_jungle(
-        ctx: Context<InitializeJungle>,
-        bumps: InitializeJungleBumps,
+    pub fn initialize_staking(
+        ctx: Context<InitializeStaking>,
+        bumps: InitializeStakingBumps,
         max_rarity: u64,
         max_multiplier: u64,
         base_weekly_emissions: u64,
         start: i64,
         root: [u8; 32],
     ) -> ProgramResult {
-        instructions::init_jungle::handler(
+        instructions::init_staking::handler(
             ctx,
             bumps,
             max_rarity,
@@ -36,15 +37,15 @@ mod jungle {
     }
 
     /// Sets the staking parameters
-    pub fn set_jungle(
-        ctx: Context<SetJungle>,
+    pub fn set_staking(
+        ctx: Context<SetStaking>,
         max_rarity: u64,
         max_multiplier: u64,
         base_weekly_emissions: u64,
         start: i64,
         root: [u8; 32],
     ) -> ProgramResult {
-        instructions::set_jungle::handler(
+        instructions::set_staking::handler(
             ctx,
             max_rarity,
             max_multiplier,
@@ -65,20 +66,19 @@ mod jungle {
         )
     }
 
-    /// Stake an animal
-    pub fn stake_animal(
-        ctx: Context<StakeAnimal>,
-        bumps: StakeAnimalBumps,
+    /// Stake an NFT
+    pub fn stake_nft(
+        ctx: Context<StakeNft>,
+        bumps: StakedNftBumps,
         proof: Vec<[u8; 32]>,
         rarity: u64,
-        faction: u64,
     ) -> ProgramResult {
-        instructions::stake_animal::handler(ctx, bumps, proof, rarity, faction)
+        instructions::stake_nft::handler(ctx, bumps, proof, rarity)
     }
 
-    /// Unstake a staked animal
-    pub fn unstake_animal(ctx: Context<UnstakeAnimal>) -> ProgramResult {
-        instructions::unstake_animal::handler(ctx)
+    /// Unstake a staked nft
+    pub fn unstake_nft(ctx: Context<UnstakeNft>) -> ProgramResult {
+        instructions::unstake_nft::handler(ctx)
     }
 
     /// Claim staking rewards
@@ -89,8 +89,8 @@ mod jungle {
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
-pub struct InitializeJungleBumps {
-    pub jungle: u8,
+pub struct InitializeStakingBumps {
+    pub staking: u8,
     pub escrow: u8,
     pub rewards: u8,
 }
@@ -98,7 +98,7 @@ pub struct InitializeJungleBumps {
 /// The global state of the program
 #[account]
 #[derive(Default)]
-pub struct Jungle {
+pub struct Staking {
     /// The identifier
     pub key: Pubkey,
 
@@ -106,7 +106,7 @@ pub struct Jungle {
     pub owner: Pubkey,
 
     /// The bump used to generate PDAs
-    pub bumps: InitializeJungleBumps,
+    pub bumps: InitializeStakingBumps,
 
     /// The PDA owning the community fund
     pub escrow: Pubkey,
@@ -117,8 +117,8 @@ pub struct Jungle {
     /// The account owning tokens distributed to stakers
     pub rewards_account: Pubkey,
 
-    /// The total animals currently staked.
-    pub animals_staked: u64,
+    /// The total NFTs currently staked.
+    pub nfts_staked: u64,
 
     /// The maximum rarity value
     /// Any rarity below this will be cut off
@@ -137,46 +137,32 @@ pub struct Jungle {
     pub root: [u8; 32],
 }
 
-// Jungle factions:
-//     None = 0,
-//     Sarengti = 1,
-//     Amphibian = 2,
-//     Reptile = 3,
-//     Misfit = 4,
-//     Bird = 5,
-//     Monkey = 6,
-//     Carnivore = 7,
-//     Extinct = 8,
-
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
-pub struct StakeAnimalBumps {
-    pub animal: u8,
+pub struct StakedNftBumps {
+    pub staked_nft: u8,
     pub deposit: u8,
 }
 
-/// The staking account linked to the NFT
+/// The account representing the staked nft
 #[account]
 #[derive(Default)]
-pub struct Animal {
+pub struct StakedNft {
     /// Bump used to create this PDA
-    pub bumps: StakeAnimalBumps,
+    pub bumps: StakedNftBumps,
 
     /// The mint of the NFT
     pub mint: Pubkey,
 
-    /// Owner of the animal
+    /// Owner of the staked NFT
     pub staker: Pubkey,
 
-    /// How rare the animal is
+    /// How rare the NFT is
     pub rarity: u64,
-
-    /// The wallet to which fees are given
-    pub faction: u8,
 
     /// Last time the owner claimed rewards
     pub last_claim: i64,
 }
 
-impl Animal {
+impl StakedNft {
     pub const LEN: usize = 8 + 2 + 40 + 40 + 8 + 1 + 8;
 }

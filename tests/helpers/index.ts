@@ -109,7 +109,6 @@ export const merkleCollection = async (
     mints.map((e, i) => ({
       mint: e.publicKey,
       rarity: i,
-      faction: i % 8,
     }))
   );
   const tree = new MerkleTree(leaves);
@@ -120,16 +119,15 @@ export const merkleCollection = async (
 };
 
 export const buildLeaves = (
-  data: { mint: web3.PublicKey; rarity: number; faction: number }[]
+  data: { mint: web3.PublicKey; rarity: number; }[]
 ) => {
   const leaves: Array<Buffer> = [];
   for (let idx = 0; idx < data.length; ++idx) {
-    const animal = data[idx];
+    const item = data[idx];
     leaves.push(
       Buffer.from([
-        ...animal.mint.toBuffer(),
-        ...new BN(animal.rarity).toArray("le", 8),
-        ...new BN(animal.faction).toArray("le", 8),
+        ...item.mint.toBuffer(),
+        ...new BN(item.rarity).toArray("le", 8),
       ])
     );
   }
@@ -140,7 +138,7 @@ export const buildLeaves = (
 export const mintAndTransferRewards = async (
   provider: Provider,
   programId: web3.PublicKey,
-  jungleKey: web3.PublicKey,
+  stakingKey: web3.PublicKey,
   owner: web3.Signer,
   amount: number
 ) => {
@@ -153,11 +151,11 @@ export const mintAndTransferRewards = async (
     TOKEN_PROGRAM_ID
   );
   const [escrow, escrowBump] = await web3.PublicKey.findProgramAddress(
-    [Buffer.from("escrow"), jungleKey.toBuffer()],
+    [Buffer.from("escrow"), stakingKey.toBuffer()],
     programId
   );
   const [rewardsAccount, rewardsBump] = await web3.PublicKey.findProgramAddress(
-    [Buffer.from("rewards"), jungleKey.toBuffer(), mint.publicKey.toBuffer()],
+    [Buffer.from("rewards"), stakingKey.toBuffer(), mint.publicKey.toBuffer()],
     programId
   );
   const ownerAccount = await mint.getOrCreateAssociatedAccountInfo(
