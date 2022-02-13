@@ -123,11 +123,11 @@ export const buildLeaves = (
 ) => {
   const leaves: Array<Buffer> = [];
   for (let idx = 0; idx < data.length; ++idx) {
-    const animal = data[idx];
+    const item = data[idx];
     leaves.push(
       Buffer.from([
-        ...animal.mint.toBuffer(),
-        ...new BN(animal.rarity).toArray("le", 8),
+        ...item.mint.toBuffer(),
+        ...new BN(item.rarity).toArray("le", 8),
       ])
     );
   }
