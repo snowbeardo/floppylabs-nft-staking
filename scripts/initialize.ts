@@ -104,8 +104,10 @@ const initialize = async (network: string) => {
   console.log("Staking key:", stakingKey.toString());
   console.log("Owner:", wallet.payer.publicKey.toString());
   console.log("Program ID:", stakingProgram.programId.toString());
-  console.log("Staking:", stakingAddress.toString());
-  console.log("Escrow:", escrow.toString());
+  console.log("Staking Address:", stakingAddress.toString());
+  console.log("Escrow Account:", escrow.toString());
+  console.log("Rewards Account (owned by escrow):", rewards.toString());
+  console.log("Rewards Mint (SPL Token Address):", mintRewards.publicKey.toString());
 
   try {
     const bumps = {
@@ -114,7 +116,7 @@ const initialize = async (network: string) => {
       rewards: rewardsBump,
     };
 
-    await stakingProgram.rpc.initializeJungle(
+    await stakingProgram.rpc.initializeStaking(
       bumps,
       maxRarity,
       maxMultiplier,

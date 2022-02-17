@@ -15,19 +15,20 @@ import {
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
 } from "@solana/web3.js";
+// TODO move these two out of tests
 import { buildLeaves } from "../tests/helpers";
 import { MerkleTree } from "../tests/helpers/merkleTree";
 
 import key from "../key.json";
 import config from "../config.json";
-import { Staking, IDL as StakingIDL } from "../target/types/staking";
+import { Staking, IDL } from "../target/types/staking";
 import stakingIdl from "../target/idl/staking.json";
 
 /**
- * Sets an already existing Staking
+ * Initializes a Staking
  * @param network The network to which the program is deployed
  */
-const reset = async (network: string) => {
+const initialize = async (network: string) => {
   if (network !== "devnet" && network !== "mainnet")
     throw new Error("Missing network argument");
 
@@ -37,7 +38,7 @@ const reset = async (network: string) => {
     endpoint = "https://api.devnet.solana.com";
     mints = JSON.parse(fs.readFileSync("./assets/devnetMints.json").toString());
   } else if (network === "mainnet") {
-    endpoint = "https://ssc-dao.genesysgo.net";
+    endpoint = "https://api.mainnet-beta.solana.com";
     mints = JSON.parse(
       fs.readFileSync("./assets/mainnetMints.json").toString()
     );
@@ -66,7 +67,7 @@ const reset = async (network: string) => {
   );
 
   const stakingProgram = new Program<Staking>(
-    StakingIDL,
+    IDL,
     stakingIdl.metadata.address,
     provider
   );
@@ -111,23 +112,6 @@ const reset = async (network: string) => {
   console.log("Escrow Account:", escrow.toString());
   console.log("Rewards Account (owned by escrow):", rewards.toString());
   console.log("Rewards Mint (SPL Token Address):", mintRewards.publicKey.toString());
-
-  await stakingProgram.rpc.setStaking(
-    maxRarity,
-    maxMultiplier,
-    baseWeeklyEmissions,
-    start,
-    tree.getRootArray(),
-    {
-      accounts: {
-        staking: stakingAddress,
-        owner: wallet.payer.publicKey,
-        newOwner: wallet.payer.publicKey,
-      },
-      signers: [wallet.payer],
-    }
-  );
-
 };
 
-reset(process.argv[2]);
+initialize(process.argv[2]);

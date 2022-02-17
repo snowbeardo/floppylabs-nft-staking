@@ -13,6 +13,7 @@ pub struct WithdrawRewards<'info> {
         ],
         bump = staking.bumps.staking,
         has_one = rewards_account,
+        has_one = owner,
     )]
     pub staking: Account<'info, Staking>,
 

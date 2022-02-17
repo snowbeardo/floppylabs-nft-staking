@@ -8,7 +8,7 @@ pub mod merkle_proof;
 
 use instructions::*;
 
-declare_id!("8XgPs7DNb7jvZqu5Y6zbF1idvrXnLtHZK4kVGKALd9fS");
+declare_id!("B5d1rnaYWHsnpavXRpTUXppsgaaZ8q4eRVamM6EAS6TR");
 
 #[program]
 mod staking {

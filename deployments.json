@@ -6,9 +6,9 @@
     "jungleRewardMint": "C24KScZyf6iXbo9EYsCVLX9GEg73sm9e9THcUZ1DjzcB"
   },
   "devnet": {
-    "jungleProgram": "8XgPs7DNb7jvZqu5Y6zbF1idvrXnLtHZK4kVGKALd9fS",
-    "jungleKey": "5hK2LfyynZTf76yYbJZUWDtksxTkLxumoeWTLXDpfhjo",
-    "jungleEscrowKey": "DN6T7zXJFqWyBqE3dXihf5YggRsa426aPqsAgVHQ3dAD",
-    "jungleRewardMint": "FrymUed59DCKRvcg1FAfN293A3HNcT7kABGEWdHmy7Ef"
+    "stakingProgram": "B5d1rnaYWHsnpavXRpTUXppsgaaZ8q4eRVamM6EAS6TR",
+    "stakingKey": "72JfNTSCPpYPMYisEsohisBDYZfAUzgnHsh9QN14int6",
+    "stakingEscrowKey": "9Jai3UdCp9LZPoAnzcSgG6oBYd4CQaRX6HwK5SAwpWpK",
+    "stakingRewardMint": "4wvkqip2HUggTA5eYSfXhRj4yTk4BJCdhWrfpHEFa78m"
   }
 }
