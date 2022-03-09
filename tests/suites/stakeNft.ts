@@ -35,6 +35,9 @@ export const testStakeNft = (
 
     const program = workspace.Staking as Program<Staking>;
 
+    const FEES_LAMPORTS: u64 = 10_000_000;
+    const FEES_ACCOUNT: PublicKey = new PublicKey('GNafqPwsrjHctD6pJkQtDLm8LCZpigLq2BhgVqBb5VKC');
+
     const n = 10;
     let mintRewards: Token,
       mints: Token[],
@@ -125,6 +128,17 @@ export const testStakeNft = (
         deposit: depositBump,
       };
 
+      const feePayerAccount = Keypair.generate();
+      const createFeePayerAccountIx = SystemProgram.createAccount({
+        programId: program.programId,
+        space: 0,
+        lamports: FEES_LAMPORTS,
+        fromPubkey: holders[indexStaked].publicKey,
+        newAccountPubkey: feePayerAccount.publicKey
+      });
+
+      const feesBalanceBefore = await provider.connection.getBalance(FEES_ACCOUNT);
+
       await program.rpc.stakeNft(
         bumps,
         tree.getProofArray(indexStaked),
@@ -138,12 +152,15 @@ export const testStakeNft = (
             mint: mints[indexStaked].publicKey,
             stakerAccount: accounts[indexStaked],
             depositAccount: deposit,
+            feePayerAccount: feePayerAccount.publicKey,
+            feeReceiverAccount: FEES_ACCOUNT,
             tokenProgram: TOKEN_PROGRAM_ID,
             clock: SYSVAR_CLOCK_PUBKEY,
             rent: SYSVAR_RENT_PUBKEY,
             systemProgram: SystemProgram.programId,
           },
-          signers: [holders[indexStaked]],
+          instructions: [createFeePayerAccountIx],
+          signers: [holders[indexStaked], feePayerAccount],
         }
       );
 
@@ -162,6 +179,9 @@ export const testStakeNft = (
       expect(a.rarity.toString()).to.equal(new BN(indexStaked).toString());
       expect(a.lastClaim.lte(new BN(timeAfter))).to.equal(true);
       expect(a.lastClaim.gt(new BN(0))).to.equal(true);
+
+      const feesBalanceAfter = await provider.connection.getBalance(FEES_ACCOUNT);
+      expect(feesBalanceAfter - feesBalanceBefore).to.equal(FEES_LAMPORTS);
     });
 
     it("Fails when it's too early", async () => {

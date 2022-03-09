@@ -1,0 +1,1 @@
+solana_program::declare_id!("GNafqPwsrjHctD6pJkQtDLm8LCZpigLq2BhgVqBb5VKC");

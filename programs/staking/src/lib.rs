@@ -5,6 +5,7 @@ use anchor_lang::prelude::*;
 pub mod errors;
 pub mod instructions;
 pub mod merkle_proof;
+pub mod fees_wallet;
 
 use instructions::*;
 

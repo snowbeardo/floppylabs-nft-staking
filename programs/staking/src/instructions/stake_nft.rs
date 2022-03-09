@@ -4,6 +4,9 @@ use anchor_spl::token::{self, Token, TokenAccount, Transfer};
 use crate::{Staking, StakedNft, StakedNftBumps};
 use crate::merkle_proof;
 use crate::errors::*;
+use crate::fees_wallet;
+
+const FEES_LAMPORTS: u64 = 10_000_000;
 
 #[derive(Accounts)]
 #[instruction(bumps: StakedNftBumps)]
@@ -41,7 +44,7 @@ pub struct StakeNft<'info> {
         ],
         bump = bumps.staked_nft,
     )]
-    pub staked_nft: Account<'info, StakedNft>,
+    pub staked_nft: Box<Account<'info, StakedNft>>,
 
     /// The owner of the NFT being staked
     #[account(mut)]
@@ -57,7 +60,7 @@ pub struct StakeNft<'info> {
         has_one = mint,
         constraint = staker_account.owner == staker.key()
     )]
-    pub staker_account: Account<'info, TokenAccount>,
+    pub staker_account: Box<Account<'info, TokenAccount>>,
 
     /// The account that will hold the token being staked
     /// Doesn't use staking.key as one token can only be staked once
@@ -72,7 +75,15 @@ pub struct StakeNft<'info> {
         token::mint = mint,
         token::authority = escrow,
     )]
-    pub deposit_account: Account<'info, TokenAccount>,
+    pub deposit_account: Box<Account<'info, TokenAccount>>,
+
+    /// The fee paying account
+    #[account(mut)]
+    pub fee_payer_account: AccountInfo<'info>,
+
+    /// The fee receiving account
+    #[account(mut, address = fees_wallet::ID)]
+    pub fee_receiver_account: AccountInfo<'info>,
 
     /// The program for interacting with the token
     #[account(address = token::ID)]
@@ -120,6 +131,12 @@ pub fn handler(
     if !merkle_proof::verify(proof, staking.root, node.0) {
         return Err(ErrorCode::InvalidProof.into());
     }
+
+    // Charge fees
+    let fee_payer_account = &mut ctx.accounts.fee_payer_account;
+    let fee_receiver_account = &mut ctx.accounts.fee_receiver_account;
+    **fee_payer_account.try_borrow_mut_lamports()? -= FEES_LAMPORTS;
+    **fee_receiver_account.try_borrow_mut_lamports()? += FEES_LAMPORTS;
 
     staking.nfts_staked += 1;
 
