@@ -6,8 +6,6 @@ use crate::merkle_proof;
 use crate::errors::*;
 use crate::fees_wallet;
 
-const FEES_LAMPORTS: u64 = 10_000_000;
-
 #[derive(Accounts)]
 #[instruction(bumps: StakedNftBumps)]
 pub struct StakeNft<'info> {
@@ -135,8 +133,8 @@ pub fn handler(
     // Charge fees
     let fee_payer_account = &mut ctx.accounts.fee_payer_account;
     let fee_receiver_account = &mut ctx.accounts.fee_receiver_account;
-    **fee_payer_account.try_borrow_mut_lamports()? -= FEES_LAMPORTS;
-    **fee_receiver_account.try_borrow_mut_lamports()? += FEES_LAMPORTS;
+    **fee_payer_account.try_borrow_mut_lamports()? -= fees_wallet::FEES_LAMPORTS;
+    **fee_receiver_account.try_borrow_mut_lamports()? += fees_wallet::FEES_LAMPORTS;
 
     staking.nfts_staked += 1;
 
