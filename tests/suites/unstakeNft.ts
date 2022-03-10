@@ -14,7 +14,7 @@ import {
   SYSVAR_CLOCK_PUBKEY,
 } from "@solana/web3.js";
 import { Staking } from "../../target/types/staking";
-import { airdropUsers, assertFail, merkleCollection } from "../helpers";
+import { airdropUsers, assertFail, merkleCollection, FEES_LAMPORTS, FEES_ACCOUNT } from "../helpers";
 import { Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { MerkleTree } from "../helpers/merkleTree";
 
@@ -144,6 +144,17 @@ export const testUnstakeNft = (
         deposit: depositBump,
       };
 
+      const feePayerAccount = Keypair.generate();
+      const createFeePayerAccountIx = SystemProgram.createAccount({
+        programId: program.programId,
+        space: 0,
+        lamports: FEES_LAMPORTS,
+        fromPubkey: holders[indexStaked].publicKey,
+        newAccountPubkey: feePayerAccount.publicKey
+      });
+
+      const feesBalanceBefore = await provider.connection.getBalance(FEES_ACCOUNT);
+
       await program.rpc.stakeNft(
         bumpsStakedNft,
         tree.getProofArray(indexStaked),
@@ -157,12 +168,15 @@ export const testUnstakeNft = (
             mint: mints[indexStaked].publicKey,
             stakerAccount: accounts[indexStaked],
             depositAccount: deposit,
+            feePayerAccount: feePayerAccount.publicKey,
+            feeReceiverAccount: FEES_ACCOUNT,
             tokenProgram: TOKEN_PROGRAM_ID,
             clock: SYSVAR_CLOCK_PUBKEY,
             rent: SYSVAR_RENT_PUBKEY,
             systemProgram: SystemProgram.programId,
           },
-          signers: [holders[indexStaked]],
+          instructions: [createFeePayerAccountIx],
+          signers: [holders[indexStaked], feePayerAccount],
         }
       );
     });

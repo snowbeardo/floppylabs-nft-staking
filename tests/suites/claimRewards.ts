@@ -14,7 +14,7 @@ import {
   SYSVAR_CLOCK_PUBKEY,
 } from "@solana/web3.js";
 import { Staking } from "../../target/types/staking";
-import { airdropUsers, assertFail, merkleCollection } from "../helpers";
+import { airdropUsers, assertFail, merkleCollection, FEES_LAMPORTS, FEES_ACCOUNT } from "../helpers";
 import { Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { MerkleTree } from "../helpers/merkleTree";
 
@@ -148,6 +148,15 @@ export const testClaimRewards = (
         deposit: depositBump,
       };
 
+      const feePayerAccount = Keypair.generate();
+      const createFeePayerAccountIx = SystemProgram.createAccount({
+        programId: program.programId,
+        space: 0,
+        lamports: FEES_LAMPORTS,
+        fromPubkey: holders[indexStaked].publicKey,
+        newAccountPubkey: feePayerAccount.publicKey
+      });
+
       await program.rpc.stakeNft(
         bumpsStakedNft,
         tree.getProofArray(indexStaked),
@@ -161,12 +170,15 @@ export const testClaimRewards = (
             mint: mints[indexStaked].publicKey,
             stakerAccount: accounts[indexStaked],
             depositAccount: deposit,
+            feePayerAccount: feePayerAccount.publicKey,
+            feeReceiverAccount: FEES_ACCOUNT,
             tokenProgram: TOKEN_PROGRAM_ID,
             clock: SYSVAR_CLOCK_PUBKEY,
             rent: SYSVAR_RENT_PUBKEY,
             systemProgram: SystemProgram.programId,
           },
-          signers: [holders[indexStaked]],
+          instructions: [createFeePayerAccountIx],
+          signers: [holders[indexStaked], feePayerAccount],
         }
       );
 
@@ -190,6 +202,15 @@ export const testClaimRewards = (
         deposit: otherDepositBump,
       };
 
+      const feePayerAccountOther = Keypair.generate();
+      const createFeePayerAccountIxOther = SystemProgram.createAccount({
+        programId: program.programId,
+        space: 0,
+        lamports: FEES_LAMPORTS,
+        fromPubkey: holders[indexStakedOther].publicKey,
+        newAccountPubkey: feePayerAccountOther.publicKey
+      });
+
       await program.rpc.stakeNft(
         bumpsStakedNftOther,
         tree.getProofArray(indexStakedOther),
@@ -203,12 +224,15 @@ export const testClaimRewards = (
             mint: mints[indexStakedOther].publicKey,
             stakerAccount: accounts[indexStakedOther],
             depositAccount: otherDeposit,
+            feePayerAccount: feePayerAccountOther.publicKey,
+            feeReceiverAccount: FEES_ACCOUNT,
             tokenProgram: TOKEN_PROGRAM_ID,
             clock: SYSVAR_CLOCK_PUBKEY,
             rent: SYSVAR_RENT_PUBKEY,
             systemProgram: SystemProgram.programId,
           },
-          signers: [holders[indexStakedOther]],
+          instructions: [createFeePayerAccountIxOther],
+          signers: [holders[indexStakedOther], feePayerAccountOther],
         }
       );
     });

@@ -10,4 +10,7 @@ pub enum ErrorCode {
 
     #[msg("Merkle proof is invalid")]
     InvalidProof,
+
+    #[msg("Transaction fee payment failed")]
+    InvalidFee,
 }

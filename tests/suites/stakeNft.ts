@@ -14,7 +14,7 @@ import {
   SYSVAR_CLOCK_PUBKEY,
 } from "@solana/web3.js";
 import { Staking } from "../../target/types/staking";
-import { airdropUsers, assertFail, merkleCollection } from "../helpers";
+import { airdropUsers, assertFail, merkleCollection, FEES_LAMPORTS, FEES_ACCOUNT } from "../helpers";
 import { Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { MerkleTree } from "../helpers/merkleTree";
 
@@ -34,9 +34,6 @@ export const testStakeNft = (
     setProvider(provider);
 
     const program = workspace.Staking as Program<Staking>;
-
-    const FEES_LAMPORTS: u64 = 10_000_000;
-    const FEES_ACCOUNT: PublicKey = new PublicKey('GNafqPwsrjHctD6pJkQtDLm8LCZpigLq2BhgVqBb5VKC');
 
     const n = 10;
     let mintRewards: Token,
