@@ -74,15 +74,13 @@ const reset = async (network: string) => {
   // EDIT THE `config.json` FILE
   const stakingKey = new PublicKey(deployments[network].stakingKey);
   const totalSupply = new BN(config.totalSupply);
-  const maxMultiplier = new BN(config.maxMultiplier);
-  const maxRarity = new BN(config.maxRarity);
-  const baseWeeklyEmissions = new BN(config.weeklyRewards).mul(new BN(10 ** 9));
+  const dailyRewards = new BN(config.dailyRewards).mul(new BN(10 ** 9));
   const start = new BN(config.start);
 
   const leaves = buildLeaves(
     mints.map((e, i) => ({
       mint: new PublicKey(e.mint),
-      rarity: e.rarity,
+      rarityMultiplier: e.rarityMultiplier,
     }))
   );
   const tree = new MerkleTree(leaves);
@@ -113,9 +111,7 @@ const reset = async (network: string) => {
   console.log("Rewards Mint (SPL Token Address):", mintRewards.publicKey.toString());
 
   await stakingProgram.rpc.setStaking(
-    maxRarity,
-    maxMultiplier,
-    baseWeeklyEmissions,
+    dailyRewards,
     start,
     tree.getRootArray(),
     {

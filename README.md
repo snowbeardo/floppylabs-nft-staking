@@ -5,7 +5,7 @@
 The Staking module lets holders of the a given NFTs deposit their tokens in a program-owned account in exchange for rewards. It lets users:
 
 - Deposit their NFT in a secured program-owned account. To prevent creating manually each token account, the Merkle verification of [Gumdrop](https://github.com/metaplex-foundation/metaplex/tree/master/rust/gumdrop) is reused (to be reviewed).
-- Collect rewards, paid in $X token, based on the rarity of the NFT. The rarest NFT can earn up to XX% more rewards than the least rare. The rewards rate is fixed and more people coming to stake will decrease individuals' rewards.
+- Collect rewards, paid in $X token, based on the rarityMultiplier of the NFT. The rarest NFT can earn up to XX% more rewards than the least rare.
 - Withdraw their NFT.
 
 ## Usage

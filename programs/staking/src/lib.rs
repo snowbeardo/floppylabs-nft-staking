@@ -19,18 +19,14 @@ mod staking {
     pub fn initialize_staking(
         ctx: Context<InitializeStaking>,
         bumps: InitializeStakingBumps,
-        max_rarity: u64,
-        max_multiplier: u64,
-        base_weekly_emissions: u64,
+        daily_rewards: u64,
         start: i64,
         root: [u8; 32],
     ) -> ProgramResult {
         instructions::init_staking::handler(
             ctx,
             bumps,
-            max_rarity,
-            max_multiplier,
-            base_weekly_emissions,
+            daily_rewards,
             start,
             root,
         )
@@ -39,17 +35,13 @@ mod staking {
     /// Sets the staking parameters
     pub fn set_staking(
         ctx: Context<SetStaking>,
-        max_rarity: u64,
-        max_multiplier: u64,
-        base_weekly_emissions: u64,
+        daily_rewards: u64,
         start: i64,
         root: [u8; 32],
     ) -> ProgramResult {
         instructions::set_staking::handler(
             ctx,
-            max_rarity,
-            max_multiplier,
-            base_weekly_emissions,
+            daily_rewards,
             start,
             root,
         )
@@ -71,9 +63,9 @@ mod staking {
         ctx: Context<StakeNft>,
         bumps: StakedNftBumps,
         proof: Vec<[u8; 32]>,
-        rarity: u64,
+        rarity_multiplier: u64,
     ) -> ProgramResult {
-        instructions::stake_nft::handler(ctx, bumps, proof, rarity)
+        instructions::stake_nft::handler(ctx, bumps, proof, rarity_multiplier)
     }
 
     /// Unstake a staked nft
@@ -120,15 +112,8 @@ pub struct Staking {
     /// The total NFTs currently staked.
     pub nfts_staked: u64,
 
-    /// The maximum rarity value
-    /// Any rarity below this will be cut off
-    pub maximum_rarity: u64,
-
-    /// The rarity multiplier for staking rewards, in basis points
-    pub maximum_rarity_multiplier: u64,
-
-    /// The amount of tokens emitted each week
-    pub base_weekly_emissions: u64,
+    /// The amount of tokens rewarded daily per NFT
+    pub daily_rewards: u64,
 
     /// The time the staking starts (in seconds since 1970)
     pub start: i64,
@@ -157,7 +142,7 @@ pub struct StakedNft {
     pub staker: Pubkey,
 
     /// How rare the NFT is
-    pub rarity: u64,
+    pub rarity_multiplier: u64,
 
     /// Last time the owner claimed rewards
     pub last_claim: i64,

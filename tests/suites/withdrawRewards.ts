@@ -23,8 +23,7 @@ export const testWithdrawRewards = (
     staker: Keypair;
     stakingKey: PublicKey;
     mintRewards: Token;
-    maxMultiplier: BN;
-    baseWeeklyEmissions: BN;
+    dailyRewards: BN;
     start: BN;
   },
   provider: Provider
@@ -101,9 +100,7 @@ export const testWithdrawRewards = (
 
       await program.rpc.initializeStaking(
         bumpsInit,
-        new BN(10),
-        state.maxMultiplier,
-        state.baseWeeklyEmissions,
+        state.dailyRewards,
         state.start,
         tree.getRootArray(),
         {

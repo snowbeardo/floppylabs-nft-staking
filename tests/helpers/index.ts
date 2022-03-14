@@ -108,7 +108,7 @@ export const merkleCollection = async (
   const leaves = buildLeaves(
     mints.map((e, i) => ({
       mint: e.publicKey,
-      rarity: i,
+      rarityMultiplier: i,
     }))
   );
   const tree = new MerkleTree(leaves);
@@ -119,7 +119,7 @@ export const merkleCollection = async (
 };
 
 export const buildLeaves = (
-  data: { mint: web3.PublicKey; rarity: number; }[]
+  data: { mint: web3.PublicKey; rarityMultiplier: number; }[]
 ) => {
   const leaves: Array<Buffer> = [];
   for (let idx = 0; idx < data.length; ++idx) {
@@ -127,7 +127,7 @@ export const buildLeaves = (
     leaves.push(
       Buffer.from([
         ...item.mint.toBuffer(),
-        ...new BN(item.rarity).toArray("le", 8),
+        ...new BN(item.rarityMultiplier).toArray("le", 8),
       ])
     );
   }

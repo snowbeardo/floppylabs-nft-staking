@@ -102,7 +102,7 @@ pub fn handler(
     ctx: Context<StakeNft>,
     bumps: StakedNftBumps,
     proof: Vec<[u8; 32]>,
-    rarity: u64
+    rarity_multiplier: u64
 ) -> ProgramResult {
     let staking = &mut ctx.accounts.staking;
 
@@ -115,7 +115,7 @@ pub fn handler(
     let node = solana_program::keccak::hashv(&[
         &[0x00],
         &ctx.accounts.mint.key().to_bytes(),
-        &rarity.to_le_bytes(),
+        &rarity_multiplier.to_le_bytes(),
     ]);
     if !merkle_proof::verify(proof, staking.root, node.0) {
         return Err(ErrorCode::InvalidProof.into());
@@ -128,7 +128,7 @@ pub fn handler(
     staked_nft.mint = ctx.accounts.mint.key();
     staked_nft.staker = ctx.accounts.staker.key();
     staked_nft.last_claim = ctx.accounts.clock.unix_timestamp;
-    staked_nft.rarity = rarity;
+    staked_nft.rarity_multiplier = rarity_multiplier;
 
     token::transfer(ctx.accounts.transfer_context(), 1)?;
 
