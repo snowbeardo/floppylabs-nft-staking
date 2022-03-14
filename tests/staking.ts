@@ -39,8 +39,7 @@ describe("Staking Tests Suite", () => {
       TOKEN_PROGRAM_ID,
       Keypair.generate()
     ),
-    maxMultiplier: new BN(20000),
-    baseWeeklyEmissions: new BN(604800),
+    dailyRewards: new BN(604800),
     start: new BN(Math.round(Date.now() / 1000)),
   };
 

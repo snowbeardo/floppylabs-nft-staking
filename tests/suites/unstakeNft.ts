@@ -24,8 +24,7 @@ export const testUnstakeNft = (
     staker: Keypair;
     stakingKey: PublicKey;
     mintRewards: Token;
-    maxMultiplier: BN;
-    baseWeeklyEmissions: BN;
+    dailyRewards: BN;
     start: BN;
   },
   provider: Provider
@@ -43,7 +42,6 @@ export const testUnstakeNft = (
     let tree: MerkleTree;
     let stakingKey: PublicKey, owner: Keypair, stranger: Keypair;
 
-    const maxRarity = new BN(n);
     const indexStaked = 4;
 
     beforeEach(async () => {
@@ -103,9 +101,7 @@ export const testUnstakeNft = (
 
       await program.rpc.initializeStaking(
         bumpsInit,
-        maxRarity,
-        state.maxMultiplier,
-        state.baseWeeklyEmissions,
+        state.dailyRewards,
         state.start,
         tree.getRootArray(),
         {

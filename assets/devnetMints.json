@@ -1,7 +1,7 @@
 [
   {
     "mint": "7fQtGJmQmPY9G82GMtaPosFuzG9ZBEAgmT1SP2A6R7MU",
-    "rarity": 1,
+    "rarityMultiplier": 1,
     "metadata": {
       "name": "Floppy #2",
       "uri": "https://gateway.pinata.cloud/ipfs/QmPoWpoij9owCSCCMj6SVMHDuEv3RBTx28iCgups89NPXW"
@@ -9,7 +9,7 @@
   },
   {
     "mint": "CVV1QaFoyv71rAERztvJbtP72DaBPbzpttbb9UdAbTZP",
-    "rarity": 2,
+    "rarityMultiplier": 2,
     "metadata": {
       "name": "Floppy #1",
       "uri": "https://gateway.pinata.cloud/ipfs/QmP2m7A9aTJffzZB49KwEuXXZddyWgry9B6TbMc2rpssUe"
@@ -17,7 +17,7 @@
   },
   {
     "mint": "BNgA56b5orEUsPAvCepPKUn59tsJqNFcp8tdiN1Q81Yy",
-    "rarity": 1,
+    "rarityMultiplier": 1,
     "metadata": {
       "name": "Floppy #3",
       "uri": "https://gateway.pinata.cloud/ipfs/QmRrugd57TiGTmRhmXHvV3LuAkHEVGQX3h54BDqAuaH8Li"
@@ -25,7 +25,7 @@
   },
   {
     "mint": "GX5khD68y3YvKqmgY3wiy3caqG1WNwtTBcRskiVQZb35",
-    "rarity": 3,
+    "rarityMultiplier": 3,
     "metadata": {
       "name": "Floppy #4",
       "uri": "https://gateway.pinata.cloud/ipfs/QmYtWuATbGRm1VKBnHSpWwBc7DLg5j5ts6dJWEKtzd18ML"

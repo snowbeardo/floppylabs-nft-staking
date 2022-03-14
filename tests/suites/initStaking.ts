@@ -29,8 +29,7 @@ export const testInitializeStaking = (
     mints: PublicKey[];
     stakingKey: PublicKey;
     mintRewards: Token;
-    maxMultiplier: BN;
-    baseWeeklyEmissions: BN;
+    dailyRewards: BN;
     start: BN;
   },
   provider: Provider
@@ -90,9 +89,7 @@ export const testInitializeStaking = (
 
       await program.rpc.initializeStaking(
         bumps,
-        maximumRarity,
-        state.maxMultiplier,
-        state.baseWeeklyEmissions,
+        state.dailyRewards,
         state.start,
         tree.getRootArray(),
         {
@@ -116,12 +113,8 @@ export const testInitializeStaking = (
       expect(s.owner.toString()).to.equal(state.owner.publicKey.toString());
       expect(s.escrow.toString()).to.equal(escrow.toString());
       expect(s.mint.toString()).to.equal(mintRewards.publicKey.toString());
-      expect(s.maximumRarity.toString()).to.equal(maximumRarity.toString());
-      expect(s.maximumRarityMultiplier.toString()).to.equal(
-        state.maxMultiplier.toString()
-      );
-      expect(s.baseWeeklyEmissions.toString()).to.equal(
-        state.baseWeeklyEmissions.toString()
+      expect(s.dailyRewards.toString()).to.equal(
+        state.dailyRewards.toString()
       );
       expect(s.start.toString()).to.equal(state.start.toString());
       expect(s.root.toString()).to.equal(
@@ -161,7 +154,7 @@ export const testInitializeStaking = (
           bumps,
           maximumRarity,
           new BN(9999),
-          state.baseWeeklyEmissions,
+          state.dailyRewards,
           state.start,
           tree.getRootArray(),
           {
