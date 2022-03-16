@@ -1,9 +1,9 @@
 {
   "mainnet": {
-    "jungleProgram": "8XgPs7DNb7jvZqu5Y6zbF1idvrXnLtHZK4kVGKALd9fS",
-    "jungleKey": "5fkaiL886wsZSBPJKG77SxUMsaKFJ4tyLD5bw2jpdMfH",
-    "jungleEscrowKey": "FCXmHLKaxo9NELNwCMFGEKv3kaDhP8SJ5Udpe6Zi5XW1",
-    "jungleRewardMint": "C24KScZyf6iXbo9EYsCVLX9GEg73sm9e9THcUZ1DjzcB"
+    "stakingProgram": "8XgPs7DNb7jvZqu5Y6zbF1idvrXnLtHZK4kVGKALd9fS",
+    "stakingKey": "5fkaiL886wsZSBPJKG77SxUMsaKFJ4tyLD5bw2jpdMfH",
+    "stakingEscrowKey": "FCXmHLKaxo9NELNwCMFGEKv3kaDhP8SJ5Udpe6Zi5XW1",
+    "stakingRewardMint": "C24KScZyf6iXbo9EYsCVLX9GEg73sm9e9THcUZ1DjzcB"
   },
   "devnet": {
     "stakingProgram": "B5d1rnaYWHsnpavXRpTUXppsgaaZ8q4eRVamM6EAS6TR",
