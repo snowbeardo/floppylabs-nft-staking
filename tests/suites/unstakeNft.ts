@@ -153,8 +153,6 @@ export const testUnstakeNft = (
         newAccountPubkey: feePayerAccount.publicKey
       });
 
-      const feesBalanceBefore = await provider.connection.getBalance(FEES_ACCOUNT);
-
       await program.rpc.stakeNft(
         bumpsStakedNft,
         tree.getProofArray(indexStaked),
@@ -222,6 +220,8 @@ export const testUnstakeNft = (
         newAccountPubkey: unstakeFeePayerAccount.publicKey
       });
 
+      const feesBalanceBefore = await provider.connection.getBalance(FEES_ACCOUNT);
+
       await program.rpc.unstakeNft({
         accounts: {
           staking: stakingAddress,
@@ -238,6 +238,9 @@ export const testUnstakeNft = (
         instructions: [createUnstakeFeePayerAccountIx],
         signers: [holders[indexStaked], unstakeFeePayerAccount],
       });
+
+      const feesBalanceAfter = await provider.connection.getBalance(FEES_ACCOUNT);
+      expect(feesBalanceAfter - feesBalanceBefore).to.equal(FEES_LAMPORTS);
 
       const j = await program.account.staking.fetch(stakingAddress);
 

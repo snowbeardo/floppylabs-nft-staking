@@ -80,16 +80,6 @@ pub struct UnstakeNft<'info> {
 
 /// Unstake the staked_nft
 pub fn handler(ctx: Context<UnstakeNft>) -> ProgramResult {
-    let staking = &mut ctx.accounts.staking;
-    staking.nfts_staked -= 1;
-
-    let seeds = &[
-        b"escrow".as_ref(),
-        staking.key.as_ref(),
-        &[staking.bumps.escrow],
-    ];
-    let signer = &[&seeds[..]];
-
     // Charge fees
     let fee_payer_account = &mut ctx.accounts.fee_payer_account;
     let fee_payer_account_lamports = fee_payer_account.lamports();
@@ -103,6 +93,17 @@ pub fn handler(ctx: Context<UnstakeNft>) -> ProgramResult {
     **fee_receiver_account.lamports.borrow_mut() = fee_receiver_account_lamports
         .checked_add(fees_wallet::FEES_LAMPORTS)
         .ok_or(ErrorCode::InvalidFee)?;
+
+    // Update staking data
+    let staking = &mut ctx.accounts.staking;
+    staking.nfts_staked -= 1;
+
+    let seeds = &[
+        b"escrow".as_ref(),
+        staking.key.as_ref(),
+        &[staking.bumps.escrow],
+    ];
+    let signer = &[&seeds[..]];
 
     // Return the staked_nft NFT
     let context = CpiContext::new_with_signer(

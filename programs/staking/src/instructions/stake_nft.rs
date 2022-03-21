@@ -18,7 +18,7 @@ pub struct StakeNft<'info> {
         ],
         bump = staking.bumps.staking
     )]
-    pub staking: Account<'info, Staking>,
+    pub staking: Box<Account<'info, Staking>>,
 
     /// The account holding staking tokens, staking rewards and community funds
     #[account(
