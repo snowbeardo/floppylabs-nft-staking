@@ -43,6 +43,8 @@ export const testStakeNft = (
 
     const indexStaked = 4;
 
+    let stakingKey: PublicKey, owner: Keypair, stranger: Keypair;
+
     const startingAmount = new BN(10 ** 10);
 
     beforeEach(async () => {
