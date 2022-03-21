@@ -110,12 +110,10 @@ pub fn handler(ctx: Context<ClaimStaking>) -> ProgramResult {
     let staking = &ctx.accounts.staking;
     let staked_nft = &mut ctx.accounts.staked_nft;
 
-    // Calculate claim amount
-    let rarity = if staked_nft.rarity <= staking.maximum_rarity { staked_nft.rarity } else { staking.maximum_rarity };
-    let multiplier = 10000 + (staking.maximum_rarity_multiplier - 10000) * rarity / staking.maximum_rarity;
+    let rarity_multiplier = staked_nft.rarity_multiplier;
     let seconds_elapsed = ctx.accounts.clock.unix_timestamp - staked_nft.last_claim;
-    let weekly_emissions = staking.base_weekly_emissions * multiplier / 10000;
-    let rewards_amount = weekly_emissions * (seconds_elapsed as u64) / 604800;
+    let daily_rewards_adjusted = staking.daily_rewards * rarity_multiplier;
+    let rewards_amount = daily_rewards_adjusted * (seconds_elapsed as u64) / 86400;
     
     staked_nft.last_claim = ctx.accounts.clock.unix_timestamp;
 

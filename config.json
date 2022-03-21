@@ -1,7 +1,5 @@
 {
     "totalSupply": 3000000,
-    "maxMultiplier": 25000,
-    "maxRarity": 1250,
-    "weeklyRewards": 21,
+    "dailyRewards": 1,
     "start": 1641859200
 }

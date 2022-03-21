@@ -23,8 +23,7 @@ export const testSetStaking = (
     staker: Keypair;
     stakingKey: PublicKey;
     mintRewards: Token;
-    maxMultiplier: BN;
-    baseWeeklyEmissions: BN;
+    dailyRewards: BN;
     start: BN;
   },
   provider: Provider
@@ -53,22 +52,16 @@ export const testSetStaking = (
     });
 
     it("Reset the Staking", async () => {
-      const newOwner = Keypair.generate();
-      const newMaximumMultiplier = new BN(100000);
-      const newWeekly = new BN(100000);
+      const newOwner = Keypair.generate();      
+      const newDailyRewards = new BN(100000);
 
       const [stakingAddress, stakingBump] = await PublicKey.findProgramAddress(
         [Buffer.from("staking"), state.stakingKey.toBuffer()],
         program.programId
-      );
+      );      
 
-      const maximumRarity = new BN(mints.length - 1);
-      const newMaximumRarity = new BN(mints.length + 100);
-
-      await program.rpc.setStaking(
-        newMaximumRarity,
-        newMaximumMultiplier,
-        newWeekly,
+      await program.rpc.setStaking(        
+        newDailyRewards,
         state.start,
         tree.getRootArray(),
         {
@@ -84,19 +77,13 @@ export const testSetStaking = (
       const s = await program.account.staking.fetch(stakingAddress);
 
       expect(s.owner.toString()).to.equal(newOwner.publicKey.toString());
-      expect(s.maximumRarity.toString()).to.equal(newMaximumRarity.toString());
-      expect(s.maximumRarityMultiplier.toString()).to.equal(
-        newMaximumMultiplier.toString()
-      );
-      expect(s.baseWeeklyEmissions.toString()).to.equal(newWeekly.toString());
+      expect(s.dailyRewards.toString()).to.equal(newDailyRewards.toString());
       expect(s.root.toString()).to.equal(
         tree.getRoot().toJSON().data.toString()
       );
 
       await program.rpc.setStaking(
-        maximumRarity,
-        state.maxMultiplier,
-        state.baseWeeklyEmissions,
+        state.dailyRewards,
         state.start,
         tree.getRootArray(),
         {
@@ -113,7 +100,7 @@ export const testSetStaking = (
     it("Fails when called by an outsider", async () => {
       const newOwner = Keypair.generate();
       const newMaximumMultiplier = new BN(100000);
-      const newWeekly = new BN(100000);
+      const newDailyRewards = new BN(100000);
 
       const [stakingAddress, stakingBump] = await PublicKey.findProgramAddress(
         [Buffer.from("staking"), state.stakingKey.toBuffer()],
@@ -126,7 +113,7 @@ export const testSetStaking = (
         program.rpc.setStaking(
           newMaximumRarity,
           newMaximumMultiplier,
-          newWeekly,
+          newDailyRewards,
           tree.getRootArray(),
           {
             accounts: {

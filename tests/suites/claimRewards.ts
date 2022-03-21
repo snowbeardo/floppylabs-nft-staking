@@ -24,8 +24,7 @@ export const testClaimRewards = (
     staker: Keypair;
     stakingKey: PublicKey;
     mintRewards: Token;
-    maxMultiplier: BN;
-    baseWeeklyEmissions: BN;
+    dailyRewards: BN;
     start: BN;
   },
   provider: Provider
@@ -43,7 +42,6 @@ export const testClaimRewards = (
     let tree: MerkleTree;
     let stakingKey: PublicKey, owner: Keypair, stranger: Keypair;
 
-    const maxRarity = new BN(n);
     const indexStaked = 4;
     const indexStakedOther = 2;
 
@@ -104,9 +102,7 @@ export const testClaimRewards = (
 
       await program.rpc.initializeStaking(
         bumpsInit,
-        maxRarity,
-        state.maxMultiplier,
-        state.baseWeeklyEmissions,
+        state.dailyRewards,
         state.start,
         tree.getRootArray(),
         {
@@ -332,20 +328,14 @@ export const testClaimRewards = (
 
       // The amount given is correct
       const elapsed = a.lastClaim.sub(stakedNftBefore.lastClaim);
-      const rarityMultiplier = new BN(10000).add(
-        state.maxMultiplier
-          .sub(new BN(10000))
-          .mul(new BN(indexStaked))
-          .div(new BN(n))
-      );
+      // Rarity is initialized, in the test, to the index for simplicity
+      const rarityMultiplier = new BN(indexStaked);
 
       expect(rewardsGiven.toString()).to.equal(
-        state.baseWeeklyEmissions
+        state.dailyRewards
           .mul(elapsed)
-          .div(new BN(604800))
+          .div(new BN(86400))
           .mul(rarityMultiplier)
-          //.div(j.nftsStaked)
-          .div(new BN(10000))
           .toString()
       );
     });

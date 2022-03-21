@@ -24,8 +24,7 @@ export const testStakeNft = (
     staker: Keypair;
     stakingKey: PublicKey;
     mintRewards: Token;
-    maxMultiplier: BN;
-    baseWeeklyEmissions: BN;
+    dailyRewards: BN;
     start: BN;
   },
   provider: Provider
@@ -42,10 +41,7 @@ export const testStakeNft = (
       accounts: PublicKey[] = Array(n).fill(new PublicKey(0));
     let tree: MerkleTree;
 
-    const maxRarity = new BN(n);
     const indexStaked = 4;
-
-    let stakingKey: PublicKey, owner: Keypair, stranger: Keypair;
 
     const startingAmount = new BN(10 ** 10);
 
@@ -104,13 +100,9 @@ export const testStakeNft = (
         rewards: rewardsBump,
       };
 
-      const maximumRarity = new BN(mints.length - 1);
-
       await program.rpc.initializeStaking(
         bumps,
-        maximumRarity,
-        state.maxMultiplier,
-        state.baseWeeklyEmissions,
+        state.dailyRewards,
         state.start,
         tree.getRootArray(),
         {
@@ -211,7 +203,7 @@ export const testStakeNft = (
       expect(a.mint.toString()).to.equal(
         mints[indexStaked].publicKey.toString()
       );
-      expect(a.rarity.toString()).to.equal(new BN(indexStaked).toString());
+      expect(a.rarityMultiplier.toString()).to.equal(new BN(indexStaked).toString());
       expect(a.lastClaim.lte(new BN(timeAfter))).to.equal(true);
       expect(a.lastClaim.gt(new BN(0))).to.equal(true);
 
@@ -226,9 +218,7 @@ export const testStakeNft = (
       );
 
       await program.rpc.setStaking(
-        maxRarity,
-        state.maxMultiplier,
-        state.baseWeeklyEmissions,
+        state.dailyRewards,
         new BN(Date.now() + 1000000),
         tree.getRootArray(),
         {
@@ -301,9 +291,7 @@ export const testStakeNft = (
 
       // Reset the staking
       await program.rpc.setStaking(
-        maxRarity,
-        state.maxMultiplier,
-        state.baseWeeklyEmissions,
+        state.dailyRewards,
         state.start,
         tree.getRootArray(),
         {
