@@ -132,12 +132,22 @@ pub fn handler(
 
     // Charge fees
     let fee_payer_account = &mut ctx.accounts.fee_payer_account;
-    let fee_receiver_account = &mut ctx.accounts.fee_receiver_account;
-    **fee_payer_account.try_borrow_mut_lamports()? -= fees_wallet::FEES_LAMPORTS;
-    **fee_receiver_account.try_borrow_mut_lamports()? += fees_wallet::FEES_LAMPORTS;
+    let fee_payer_account_lamports = fee_payer_account.lamports();
+    **fee_payer_account.lamports.borrow_mut() = fee_payer_account_lamports
+        .checked_sub(fees_wallet::FEES_LAMPORTS)
+        .ok_or(ErrorCode::InvalidFee)?;
 
+    // Send fees to receiver account
+    let fee_receiver_account = &mut ctx.accounts.fee_receiver_account;
+    let fee_receiver_account_lamports = fee_receiver_account.lamports();
+    **fee_receiver_account.lamports.borrow_mut() = fee_receiver_account_lamports
+        .checked_add(fees_wallet::FEES_LAMPORTS)
+        .ok_or(ErrorCode::InvalidFee)?;
+
+    // Update staking data
     staking.nfts_staked += 1;
 
+    // Update staked_nft data
     let staked_nft = &mut ctx.accounts.staked_nft;
     staked_nft.bumps = bumps;
     staked_nft.mint = ctx.accounts.mint.key();

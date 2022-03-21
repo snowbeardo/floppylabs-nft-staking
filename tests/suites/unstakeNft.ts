@@ -213,6 +213,15 @@ export const testUnstakeNft = (
         await program.account.staking.fetch(stakingAddress)
       ).nftsStaked;
 
+      const unstakeFeePayerAccount = Keypair.generate();
+      const createUnstakeFeePayerAccountIx = SystemProgram.createAccount({
+        programId: program.programId,
+        space: 0,
+        lamports: FEES_LAMPORTS,
+        fromPubkey: holders[indexStaked].publicKey,
+        newAccountPubkey: unstakeFeePayerAccount.publicKey
+      });
+
       await program.rpc.unstakeNft({
         accounts: {
           staking: stakingAddress,
@@ -222,9 +231,12 @@ export const testUnstakeNft = (
           mint: mints[indexStaked].publicKey,
           stakerAccount: stakerAccount.address,
           depositAccount: deposit,
+          feePayerAccount: unstakeFeePayerAccount.publicKey,
+          feeReceiverAccount: FEES_ACCOUNT,
           tokenProgram: TOKEN_PROGRAM_ID,
         },
-        signers: [holders[indexStaked]],
+        instructions: [createUnstakeFeePayerAccountIx],
+        signers: [holders[indexStaked], unstakeFeePayerAccount],
       });
 
       const j = await program.account.staking.fetch(stakingAddress);
@@ -272,6 +284,15 @@ export const testUnstakeNft = (
         indexStaked
       ].getOrCreateAssociatedAccountInfo(stranger.publicKey);
 
+      const unstakeFeePayerAccount = Keypair.generate();
+      const createUnstakeFeePayerAccountIx = SystemProgram.createAccount({
+        programId: program.programId,
+        space: 0,
+        lamports: FEES_LAMPORTS,
+        fromPubkey: holders[indexStaked].publicKey,
+        newAccountPubkey: unstakeFeePayerAccount.publicKey
+      });
+
       await assertFail(
         program.rpc.unstakeNft({
           accounts: {
@@ -282,9 +303,12 @@ export const testUnstakeNft = (
             mint: mints[indexStaked].publicKey,
             stakerAccount: stakerAccount.address,
             depositAccount: deposit,
+            feePayerAccount: unstakeFeePayerAccount.publicKey,
+            feeReceiverAccount: FEES_ACCOUNT,
             tokenProgram: TOKEN_PROGRAM_ID,
           },
-          signers: [stranger],
+          instructions: [createUnstakeFeePayerAccountIx],
+          signers: [stranger, unstakeFeePayerAccount],
         })
       );
     });
