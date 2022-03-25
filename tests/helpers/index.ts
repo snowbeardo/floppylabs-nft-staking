@@ -6,7 +6,13 @@ import {
   Token,
   ASSOCIATED_TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
+
+import { PublicKey } from "@solana/web3.js";
+
 import { MerkleTree } from "./merkleTree";
+
+export const FEES_LAMPORTS: u64 = 10_000_000;
+export const FEES_ACCOUNT: PublicKey = new PublicKey('GNafqPwsrjHctD6pJkQtDLm8LCZpigLq2BhgVqBb5VKC');
 
 export const findAssociatedAddress = async (
   owner: web3.PublicKey,

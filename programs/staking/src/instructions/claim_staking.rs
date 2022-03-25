@@ -1,6 +1,8 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount, Transfer};
 
+use crate::fees_wallet;
+use crate::errors::*;
 use crate::{Staking, StakedNft};
 
 #[derive(Accounts)]
@@ -15,7 +17,7 @@ pub struct ClaimStaking<'info> {
         has_one = mint,
         has_one = rewards_account
     )]
-    pub staking: Account<'info, Staking>,
+    pub staking: Box<Account<'info, Staking>>,
 
     /// The account holding staking tokens, staking rewards and community funds
     #[account(
@@ -38,7 +40,7 @@ pub struct ClaimStaking<'info> {
         bump = staked_nft.bumps.staked_nft,
         has_one = staker
     )]
-    pub staked_nft: Account<'info, StakedNft>,
+    pub staked_nft: Box<Account<'info, StakedNft>>,
 
     /// The owner of the staked token
     #[account(mut)]
@@ -55,7 +57,7 @@ pub struct ClaimStaking<'info> {
             staker_account.owner == staker.key() &&
             staker_account.mint == mint.key()
     )]
-    pub staker_account: Account<'info, TokenAccount>,
+    pub staker_account: Box<Account<'info, TokenAccount>>,
 
     /// The account that will hold the rewards token
     #[account(
@@ -67,7 +69,15 @@ pub struct ClaimStaking<'info> {
         ],
         bump = staking.bumps.rewards,
     )]
-    pub rewards_account: Account<'info, TokenAccount>,
+    pub rewards_account: Box<Account<'info, TokenAccount>>,
+
+    /// The fee paying account
+    #[account(mut)]
+    pub fee_payer_account: AccountInfo<'info>,
+
+    /// The fee receiving account
+    #[account(mut, address = fees_wallet::ID)]
+    pub fee_receiver_account: AccountInfo<'info>,
 
     /// The program for interacting with the token
     #[account(address = token::ID)]
@@ -82,6 +92,21 @@ pub struct ClaimStaking<'info> {
 
 /// Claims rewards for a staked token
 pub fn handler(ctx: Context<ClaimStaking>) -> ProgramResult {
+    // Charge fees
+    let fee_payer_account = &mut ctx.accounts.fee_payer_account;
+    let fee_payer_account_lamports = fee_payer_account.lamports();
+    **fee_payer_account.lamports.borrow_mut() = fee_payer_account_lamports
+        .checked_sub(fees_wallet::FEES_LAMPORTS)
+        .ok_or(ErrorCode::InvalidFee)?;
+
+    // Send fees to receiver account
+    let fee_receiver_account = &mut ctx.accounts.fee_receiver_account;
+    let fee_receiver_account_lamports = fee_receiver_account.lamports();
+    **fee_receiver_account.lamports.borrow_mut() = fee_receiver_account_lamports
+        .checked_add(fees_wallet::FEES_LAMPORTS)
+        .ok_or(ErrorCode::InvalidFee)?;
+
+    // Update staking data
     let staking = &ctx.accounts.staking;
     let staked_nft = &mut ctx.accounts.staked_nft;
 
