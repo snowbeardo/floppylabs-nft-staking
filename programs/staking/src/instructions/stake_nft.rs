@@ -36,6 +36,7 @@ pub struct StakeNft<'info> {
     #[account(
         init,
         payer = staker,
+        space = 8 + 2 + 32 + 32 + 32 + 8 + 8 + 8,
         seeds = [
             b"staked_nft",
             mint.key().as_ref()
@@ -150,8 +151,10 @@ pub fn handler(
     // Update staked_nft data
     let staked_nft = &mut ctx.accounts.staked_nft;
     staked_nft.bumps = bumps;
+    staked_nft.key = staking.key;
     staked_nft.mint = ctx.accounts.mint.key();
     staked_nft.staker = ctx.accounts.staker.key();
+    staked_nft.staked_at = ctx.accounts.clock.unix_timestamp;
     staked_nft.last_claim = ctx.accounts.clock.unix_timestamp;
     staked_nft.rarity_multiplier = rarity_multiplier;
 
