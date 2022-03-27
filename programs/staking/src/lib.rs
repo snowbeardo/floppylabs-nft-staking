@@ -9,7 +9,7 @@ pub mod fees_wallet;
 
 use instructions::*;
 
-declare_id!("B5d1rnaYWHsnpavXRpTUXppsgaaZ8q4eRVamM6EAS6TR");
+declare_id!("BtDDM9Nve5JXUVvDg8wmLDVwzgGB8pJ6oum4fGRKM8Av");
 
 #[program]
 mod staking {
@@ -136,6 +136,9 @@ pub struct StakedNft {
     /// Bump used to create this PDA
     pub bumps: StakedNftBumps,
 
+    /// Staking key identifying the project
+    pub key: Pubkey,
+
     /// The mint of the NFT
     pub mint: Pubkey,
 
@@ -145,10 +148,13 @@ pub struct StakedNft {
     /// How rare the NFT is
     pub rarity_multiplier: u64,
 
+    /// Creation of this stake account
+    pub staked_at: i64,
+
     /// Last time the owner claimed rewards
     pub last_claim: i64,
 }
 
 impl StakedNft {
-    pub const LEN: usize = 8 + 2 + 40 + 40 + 8 + 1 + 8;
+    pub const LEN: usize = 8 + 2 + 32 + 32 + 32 + 8 + 8 + 8;
 }
