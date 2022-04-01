@@ -12,7 +12,7 @@ import { PublicKey } from "@solana/web3.js";
 import { MerkleTree } from "./merkleTree";
 
 export const FEES_LAMPORTS = 10_000_000;
-export const FEES_ACCOUNT: PublicKey = new PublicKey('GNafqPwsrjHctD6pJkQtDLm8LCZpigLq2BhgVqBb5VKC');
+export const FEES_ACCOUNT: PublicKey = new PublicKey('WHduhbnLJnGNcjBhiGp58kSKMcph6G6Aaq1MiPXj7yd');
 
 export const findAssociatedAddress = async (
   owner: web3.PublicKey,
