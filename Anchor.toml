@@ -1,6 +1,12 @@
 [programs.localnet]
 staking = "BtDDM9Nve5JXUVvDg8wmLDVwzgGB8pJ6oum4fGRKM8Av"
 
+[programs.devnet]
+staking = "BtDDM9Nve5JXUVvDg8wmLDVwzgGB8pJ6oum4fGRKM8Av"
+
+[programs.mainnet]
+staking = "BtDDM9Nve5JXUVvDg8wmLDVwzgGB8pJ6oum4fGRKM8Av"
+
 [registry]
 url = "https://anchor.projectserum.com"
 
