@@ -112,7 +112,7 @@ pub fn handler(ctx: Context<ClaimStaking>) -> ProgramResult {
 
     let rarity_multiplier = staked_nft.rarity_multiplier;
     let seconds_elapsed = ctx.accounts.clock.unix_timestamp - staked_nft.last_claim;
-    let daily_rewards_adjusted = staking.daily_rewards * rarity_multiplier;
+    let daily_rewards_adjusted = staking.daily_rewards * rarity_multiplier / 100;
     let rewards_amount = daily_rewards_adjusted * (seconds_elapsed as u64) / 86400;
     
     staked_nft.last_claim = ctx.accounts.clock.unix_timestamp;

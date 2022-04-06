@@ -336,8 +336,11 @@ export const testClaimRewards = (
           .mul(elapsed)
           .div(new BN(86400))
           .mul(rarityMultiplier)
+          .div(new BN(100))
           .toString()
       );
+
+      console.log(rewardsGiven);
     });
 
     it("Can't claim an unstaked token", async () => {
