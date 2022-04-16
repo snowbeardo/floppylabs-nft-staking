@@ -275,15 +275,6 @@ export const testClaimRewards = (
       const rewardsBefore = (await rewardToken.getAccountInfo(rewardsAccount))
         .amount;
 
-      const claimFeePayerAccount = Keypair.generate();
-      const createClaimFeePayerAccountIx = SystemProgram.createAccount({
-        programId: program.programId,
-        space: 0,
-        lamports: FEES_LAMPORTS,
-        fromPubkey: holders[indexStaked].publicKey,
-        newAccountPubkey: claimFeePayerAccount.publicKey
-      });
-
       const feesBalanceBefore = await provider.connection.getBalance(FEES_ACCOUNT);
 
       const tx = await program.rpc.claimStaking({
@@ -295,20 +286,17 @@ export const testClaimRewards = (
           mint: rewardToken.publicKey,
           stakerAccount: stakerAccount.address,
           rewardsAccount: rewardsAccount,
-          feePayerAccount: claimFeePayerAccount.publicKey,
-          feeReceiverAccount: FEES_ACCOUNT,
           tokenProgram: TOKEN_PROGRAM_ID,
           clock: SYSVAR_CLOCK_PUBKEY,
           rent: SYSVAR_RENT_PUBKEY,
           systemProgram: SystemProgram.programId,
         },
-        instructions: [createClaimFeePayerAccountIx],
-        signers: [holders[indexStaked], claimFeePayerAccount],
+        signers: [holders[indexStaked]],
       });
       provider.connection.confirmTransaction(tx);
 
       const feesBalanceAfter = await provider.connection.getBalance(FEES_ACCOUNT);
-      expect(feesBalanceAfter - feesBalanceBefore).to.equal(FEES_LAMPORTS);
+      expect(feesBalanceAfter).to.equal(feesBalanceBefore); // No fees charged on CLAIM
 
       const j = await program.account.staking.fetch(stakingAddress);
       const a = await program.account.stakedNft.fetch(stakedNft);
@@ -375,15 +363,6 @@ export const testClaimRewards = (
         holders[indexStaked + 1].publicKey
       );
 
-      const claimFeePayerAccount = Keypair.generate();
-      const createClaimFeePayerAccountIx = SystemProgram.createAccount({
-        programId: program.programId,
-        space: 0,
-        lamports: FEES_LAMPORTS,
-        fromPubkey: holders[indexStaked].publicKey,
-        newAccountPubkey: claimFeePayerAccount.publicKey
-      });
-
       await assertFail(
         program.rpc.claimStaking({
           accounts: {
@@ -394,15 +373,12 @@ export const testClaimRewards = (
             mint: mintRewards.publicKey,
             stakerAccount: stakerAccount.address,
             rewardsAccount: rewardsAccount,
-            feePayerAccount: claimFeePayerAccount.publicKey,
-            feeReceiverAccount: FEES_ACCOUNT,
             tokenProgram: TOKEN_PROGRAM_ID,
             clock: SYSVAR_CLOCK_PUBKEY,
             rent: SYSVAR_RENT_PUBKEY,
             systemProgram: SystemProgram.programId,
           },
-          instructions: [createClaimFeePayerAccountIx],
-          signers: [holders[indexStaked + 1], claimFeePayerAccount],
+          signers: [holders[indexStaked + 1]],
         })
       );
     });
@@ -439,15 +415,6 @@ export const testClaimRewards = (
         holders[indexStaked].publicKey
       );
 
-      const claimFeePayerAccount = Keypair.generate();
-      const createClaimFeePayerAccountIx = SystemProgram.createAccount({
-        programId: program.programId,
-        space: 0,
-        lamports: FEES_LAMPORTS,
-        fromPubkey: holders[indexStaked].publicKey,
-        newAccountPubkey: claimFeePayerAccount.publicKey
-      });
-
       await assertFail(
         program.rpc.claimStaking({
           accounts: {
@@ -458,15 +425,12 @@ export const testClaimRewards = (
             mint: mintRewards.publicKey,
             stakerAccount: stakerAccount.address,
             rewardsAccount: rewardsAccount,
-            feePayerAccount: claimFeePayerAccount.publicKey,
-            feeReceiverAccount: FEES_ACCOUNT,
             tokenProgram: TOKEN_PROGRAM_ID,
             clock: SYSVAR_CLOCK_PUBKEY,
             rent: SYSVAR_RENT_PUBKEY,
             systemProgram: SystemProgram.programId,
           },
-          instructions: [createClaimFeePayerAccountIx],
-          signers: [holders[indexStaked], claimFeePayerAccount],
+          signers: [holders[indexStaked]],
         })
       );
     });
