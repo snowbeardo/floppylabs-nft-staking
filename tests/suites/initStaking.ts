@@ -120,6 +120,7 @@ export const testInitializeStaking = (
       expect(s.root.toString()).to.equal(
         tree.getRoot().toJSON().data.toString()
       );
+      expect(s.feesExempt).to.equal(false);
     });
 
     it("Only accepts positive multipliers", async () => {

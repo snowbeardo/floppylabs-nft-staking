@@ -6,6 +6,7 @@ pub mod errors;
 pub mod instructions;
 pub mod merkle_proof;
 pub mod fees_wallet;
+pub mod fl_auth_wallet;
 
 use instructions::*;
 
@@ -45,6 +46,18 @@ mod staking {
             daily_rewards,
             start,
             root,
+        )
+    }
+
+    /// Sets the fees exempt property for the project.
+    /// Only FloppyLabs account has the authority to execute this
+    pub fn set_fees_exempt(
+        ctx: Context<SetFeesExempt>,
+        fees_exempt: bool,
+    ) -> ProgramResult {
+        instructions::set_fees_exempt::handler(
+            ctx,
+            fees_exempt,
         )
     }
 
@@ -121,6 +134,9 @@ pub struct Staking {
 
     /// The root of the merkle tree used to know if a token is part of the collection
     pub root: [u8; 32],
+
+    /// Whether or not the project is fees exempt: default to false
+    pub fees_exempt: bool
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]

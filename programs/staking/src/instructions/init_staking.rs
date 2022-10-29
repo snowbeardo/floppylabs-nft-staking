@@ -82,6 +82,7 @@ pub fn handler(
     staking.daily_rewards = daily_rewards;
     staking.start = start;
     staking.root = root;
+    staking.fees_exempt = false;
 
     msg!("Staking initialized");
 

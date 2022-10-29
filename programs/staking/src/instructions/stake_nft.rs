@@ -131,19 +131,21 @@ pub fn handler(
         return Err(ErrorCode::InvalidProof.into());
     }
 
-    // Charge fees
-    let fee_payer_account = &mut ctx.accounts.fee_payer_account;
-    let fee_payer_account_lamports = fee_payer_account.lamports();
-    **fee_payer_account.lamports.borrow_mut() = fee_payer_account_lamports
-        .checked_sub(fees_wallet::FEES_LAMPORTS)
-        .ok_or(ErrorCode::InvalidFee)?;
+    // Charge fees if the project is not fees exempt
+    if !staking.fees_exempt {
+        let fee_payer_account = &mut ctx.accounts.fee_payer_account;
+        let fee_payer_account_lamports = fee_payer_account.lamports();
+        **fee_payer_account.lamports.borrow_mut() = fee_payer_account_lamports
+            .checked_sub(fees_wallet::FEES_LAMPORTS)
+            .ok_or(ErrorCode::InvalidFee)?;
 
-    // Send fees to receiver account
-    let fee_receiver_account = &mut ctx.accounts.fee_receiver_account;
-    let fee_receiver_account_lamports = fee_receiver_account.lamports();
-    **fee_receiver_account.lamports.borrow_mut() = fee_receiver_account_lamports
-        .checked_add(fees_wallet::FEES_LAMPORTS)
-        .ok_or(ErrorCode::InvalidFee)?;
+        // Send fees to receiver account
+        let fee_receiver_account = &mut ctx.accounts.fee_receiver_account;
+        let fee_receiver_account_lamports = fee_receiver_account.lamports();
+        **fee_receiver_account.lamports.borrow_mut() = fee_receiver_account_lamports
+            .checked_add(fees_wallet::FEES_LAMPORTS)
+            .ok_or(ErrorCode::InvalidFee)?;
+    }
 
     // Update staking data
     staking.nfts_staked += 1;
