@@ -1,7 +1,7 @@
-use anchor_lang::error;
+use anchor_lang::error_code;
 
-#[error]
-pub enum ErrorCode {
+#[error_code]
+pub enum StakingError {
     #[msg("Too early to stake")]
     TooEarly,
 

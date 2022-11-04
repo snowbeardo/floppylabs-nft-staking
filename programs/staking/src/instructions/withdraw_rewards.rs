@@ -26,9 +26,11 @@ pub struct WithdrawRewards<'info> {
         ],
         bump = staking.bumps.escrow
     )]
+    /// CHECK: TBD
     pub escrow: AccountInfo<'info>,
 
     /// The mint of the rewards token
+    /// CHECK: TBD
     pub mint: AccountInfo<'info>,
 
     /// The account that will holds the rewards token
@@ -60,7 +62,7 @@ pub struct WithdrawRewards<'info> {
 }
 
 /// Lets owner withdraw some rewards from the escrow without changing the token
-pub fn handler(ctx: Context<WithdrawRewards>, amount: u64) -> ProgramResult {
+pub fn handler(ctx: Context<WithdrawRewards>, amount: u64) -> Result<()> {
     let staking = &ctx.accounts.staking;
 
     // Transfer all tokens left to the owner

@@ -18,7 +18,7 @@ pub struct SetFeesExempt<'info> {
 pub fn handler(
     ctx: Context<SetFeesExempt>,
     fees_exempt: bool,
-) -> ProgramResult {
+) -> Result<()> {
 
     let staking = &mut ctx.accounts.staking;
     staking.fees_exempt = fees_exempt;

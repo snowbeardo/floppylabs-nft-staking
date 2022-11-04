@@ -24,7 +24,7 @@ mod staking {
         daily_rewards: u64,
         start: i64,
         root: [u8; 32],
-    ) -> ProgramResult {
+    ) -> Result<()> {
         instructions::init_staking::handler(
             ctx,
             bumps,
@@ -40,7 +40,7 @@ mod staking {
         daily_rewards: u64,
         start: i64,
         root: [u8; 32],
-    ) -> ProgramResult {
+    ) -> Result<()> {
         instructions::set_staking::handler(
             ctx,
             daily_rewards,
@@ -54,10 +54,20 @@ mod staking {
     pub fn set_fees_exempt(
         ctx: Context<SetFeesExempt>,
         fees_exempt: bool,
-    ) -> ProgramResult {
+    ) -> Result<()> {
         instructions::set_fees_exempt::handler(
             ctx,
             fees_exempt,
+        )
+    }
+
+    /// Sets the fees exempt property for the project.
+    /// Only FloppyLabs account has the authority to execute this
+    pub fn migrate_staking(
+        ctx: Context<MigrateStaking>,
+    ) -> Result<()> {
+        instructions::migrate_staking::handler(
+            ctx,
         )
     }
 
@@ -65,7 +75,7 @@ mod staking {
     pub fn withdraw_rewards(
         ctx: Context<WithdrawRewards>,
         amount: u64
-    ) -> ProgramResult {
+    ) -> Result<()> {
         instructions::withdraw_rewards::handler(
             ctx,
             amount
@@ -78,17 +88,17 @@ mod staking {
         bumps: StakedNftBumps,
         proof: Vec<[u8; 32]>,
         rarity_multiplier: u64,
-    ) -> ProgramResult {
+    ) -> Result<()> {
         instructions::stake_nft::handler(ctx, bumps, proof, rarity_multiplier)
     }
 
     /// Unstake a staked nft
-    pub fn unstake_nft(ctx: Context<UnstakeNft>) -> ProgramResult {
+    pub fn unstake_nft(ctx: Context<UnstakeNft>) -> Result<()> {
         instructions::unstake_nft::handler(ctx)
     }
 
     /// Claim staking rewards
-    pub fn claim_staking(ctx: Context<ClaimStaking>) -> ProgramResult {
+    pub fn claim_staking(ctx: Context<ClaimStaking>) -> Result<()> {
         instructions::claim_staking::handler(ctx)
     }
 
