@@ -16,6 +16,7 @@ import {
 import { testClaimRewards } from "./suites/claimRewards";
 import { testInitializeStaking } from "./suites/initStaking";
 import { testSetStaking } from "./suites/setStaking";
+import { testSetFeesExempt } from "./suites/setFeesExempt";
 import { testStakeNft } from "./suites/stakeNft";
 import { testUnstakeNft } from "./suites/unstakeNft";
 import { testWithdrawRewards } from "./suites/withdrawRewards";
@@ -64,6 +65,7 @@ describe("Staking Tests Suite", () => {
 
   testInitializeStaking(state, provider);
   testSetStaking(state, provider);
+  testSetFeesExempt(state, provider);
   testWithdrawRewards(state, provider);
   testStakeNft(state, provider);
   testUnstakeNft(state, provider);

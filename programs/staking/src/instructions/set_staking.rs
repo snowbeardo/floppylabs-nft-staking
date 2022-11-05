@@ -15,6 +15,7 @@ pub struct SetStaking<'info> {
     pub owner: Signer<'info>,
     
     /// The wallet that will own the staking
+    /// CHECK: TBD
     pub new_owner: AccountInfo<'info>,
 }
 
@@ -24,7 +25,7 @@ pub fn handler(
     daily_rewards: u64,
     start: i64,
     root: [u8; 32],
-) -> ProgramResult {
+) -> Result<()> {
 
     let staking = &mut ctx.accounts.staking;
     staking.owner = ctx.accounts.new_owner.key();

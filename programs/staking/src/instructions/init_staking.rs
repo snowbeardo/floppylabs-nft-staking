@@ -8,17 +8,19 @@ use crate::{Staking, InitializeStakingBumps};
 pub struct InitializeStaking<'info> {
     /// The unique identifier.
     /// Allows reusing this program for other projects without redeploying
+    /// CHECK: TBD
     pub staking_key: AccountInfo<'info>,
 
     /// The Staking state account
     #[account(
         init,
         payer = owner,
+        space = 8 + 32 + 32 + 3 + 32 + 32 + 32 + 8 + 8 + 8 + 32 + 1,
         seeds = [
             b"staking",
             staking_key.key().as_ref()
         ],
-        bump = bumps.staking,
+        bump
     )]
     pub staking: Account<'info, Staking>,
 
@@ -30,9 +32,11 @@ pub struct InitializeStaking<'info> {
         ],
         bump = bumps.escrow,
     )]
+    /// CHECK: TBD
     pub escrow: AccountInfo<'info>,
 
     /// The mint of the staking reward token
+    /// CHECK: TBD
     pub mint: AccountInfo<'info>,
 
     /// The account that will hold the rewards token
@@ -44,7 +48,7 @@ pub struct InitializeStaking<'info> {
             staking_key.key().as_ref(),
             mint.key().as_ref()
         ],
-        bump = bumps.rewards,
+        bump,
         token::mint = mint,
         token::authority = escrow
     )]
@@ -69,7 +73,7 @@ pub fn handler(
     daily_rewards: u64,
     start: i64,
     root: [u8; 32],
-) -> ProgramResult {
+) -> Result<()> {
     msg!("Init Staking");
 
     let staking = &mut ctx.accounts.staking;
@@ -82,6 +86,7 @@ pub fn handler(
     staking.daily_rewards = daily_rewards;
     staking.start = start;
     staking.root = root;
+    staking.fees_exempt = false;
 
     msg!("Staking initialized");
 

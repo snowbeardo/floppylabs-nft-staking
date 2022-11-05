@@ -3,7 +3,7 @@ use anchor_spl::token::{self, Token, TokenAccount, Transfer};
 
 use crate::{Staking, StakedNft, StakedNftBumps};
 use crate::merkle_proof;
-use crate::errors::*;
+use crate::errors::StakingError;
 use crate::fees_wallet;
 
 #[derive(Accounts)]
@@ -29,6 +29,7 @@ pub struct StakeNft<'info> {
         ],
         bump = staking.bumps.escrow
     )]
+    /// CHECK: TBD
     pub escrow: AccountInfo<'info>,
 
     /// The account representing the staked NFT
@@ -41,7 +42,7 @@ pub struct StakeNft<'info> {
             b"staked_nft",
             mint.key().as_ref()
         ],
-        bump = bumps.staked_nft,
+        bump
     )]
     pub staked_nft: Box<Account<'info, StakedNft>>,
 
@@ -51,6 +52,7 @@ pub struct StakeNft<'info> {
 
     /// The mint of the NFT being staked
     #[account(mut)]
+    /// CHECK: TBD
     pub mint: AccountInfo<'info>,
 
     /// The user account that holds the NFT
@@ -70,7 +72,7 @@ pub struct StakeNft<'info> {
             b"deposit",
             mint.key().as_ref()
         ],
-        bump = bumps.deposit,
+        bump,
         token::mint = mint,
         token::authority = escrow,
     )]
@@ -78,10 +80,12 @@ pub struct StakeNft<'info> {
 
     /// The fee paying account
     #[account(mut)]
+    /// CHECK: TBD
     pub fee_payer_account: AccountInfo<'info>,
 
     /// The fee receiving account
     #[account(mut, address = fees_wallet::ID)]
+    /// CHECK: TBD
     pub fee_receiver_account: AccountInfo<'info>,
 
     /// The program for interacting with the token
@@ -113,12 +117,12 @@ pub fn handler(
     bumps: StakedNftBumps,
     proof: Vec<[u8; 32]>,
     rarity_multiplier: u64
-) -> ProgramResult {
+) -> Result<()> {
     let staking = &mut ctx.accounts.staking;
 
     // Check that staking started
     if staking.start > ctx.accounts.clock.unix_timestamp {
-        return Err(ErrorCode::TooEarly.into());
+        return err!(StakingError::TooEarly);
     }
 
     // Verify the merkle leaf
@@ -128,22 +132,24 @@ pub fn handler(
         &rarity_multiplier.to_le_bytes(),
     ]);
     if !merkle_proof::verify(proof, staking.root, node.0) {
-        return Err(ErrorCode::InvalidProof.into());
+        return err!(StakingError::InvalidProof);
     }
 
-    // Charge fees
-    let fee_payer_account = &mut ctx.accounts.fee_payer_account;
-    let fee_payer_account_lamports = fee_payer_account.lamports();
-    **fee_payer_account.lamports.borrow_mut() = fee_payer_account_lamports
-        .checked_sub(fees_wallet::FEES_LAMPORTS)
-        .ok_or(ErrorCode::InvalidFee)?;
+    // Charge fees if the project is not fees exempt
+    if !staking.fees_exempt {
+        let fee_payer_account = &mut ctx.accounts.fee_payer_account;
+        let fee_payer_account_lamports = fee_payer_account.lamports();
+        **fee_payer_account.lamports.borrow_mut() = fee_payer_account_lamports
+            .checked_sub(fees_wallet::FEES_LAMPORTS)
+            .ok_or(StakingError::InvalidFee)?;
 
-    // Send fees to receiver account
-    let fee_receiver_account = &mut ctx.accounts.fee_receiver_account;
-    let fee_receiver_account_lamports = fee_receiver_account.lamports();
-    **fee_receiver_account.lamports.borrow_mut() = fee_receiver_account_lamports
-        .checked_add(fees_wallet::FEES_LAMPORTS)
-        .ok_or(ErrorCode::InvalidFee)?;
+        // Send fees to receiver account
+        let fee_receiver_account = &mut ctx.accounts.fee_receiver_account;
+        let fee_receiver_account_lamports = fee_receiver_account.lamports();
+        **fee_receiver_account.lamports.borrow_mut() = fee_receiver_account_lamports
+            .checked_add(fees_wallet::FEES_LAMPORTS)
+            .ok_or(StakingError::InvalidFee)?;
+    }
 
     // Update staking data
     staking.nfts_staked += 1;

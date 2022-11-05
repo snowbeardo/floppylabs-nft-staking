@@ -15,7 +15,7 @@ pub struct ClaimStaking<'info> {
         has_one = mint,
         has_one = rewards_account
     )]
-    pub staking: Account<'info, Staking>,
+    pub staking: Box<Account<'info, Staking>>,
 
     /// The account holding staking tokens, staking rewards and community funds
     #[account(
@@ -26,6 +26,7 @@ pub struct ClaimStaking<'info> {
         ],
         bump = staking.bumps.escrow
     )]
+    /// CHECK: TBD
     pub escrow: AccountInfo<'info>,
 
     /// The account representing the staked NFT
@@ -38,7 +39,7 @@ pub struct ClaimStaking<'info> {
         bump = staked_nft.bumps.staked_nft,
         has_one = staker
     )]
-    pub staked_nft: Account<'info, StakedNft>,
+    pub staked_nft: Box<Account<'info, StakedNft>>,
 
     /// The owner of the staked token
     #[account(mut)]
@@ -46,6 +47,7 @@ pub struct ClaimStaking<'info> {
 
     /// The mint of the reward token
     #[account(mut)]
+    /// CHECK: TBD
     pub mint: AccountInfo<'info>,
 
     /// The user account receiving rewards
@@ -55,7 +57,7 @@ pub struct ClaimStaking<'info> {
             staker_account.owner == staker.key() &&
             staker_account.mint == mint.key()
     )]
-    pub staker_account: Account<'info, TokenAccount>,
+    pub staker_account: Box<Account<'info, TokenAccount>>,
 
     /// The account that will hold the rewards token
     #[account(
@@ -67,7 +69,7 @@ pub struct ClaimStaking<'info> {
         ],
         bump = staking.bumps.rewards,
     )]
-    pub rewards_account: Account<'info, TokenAccount>,
+    pub rewards_account: Box<Account<'info, TokenAccount>>,
 
     /// The program for interacting with the token
     #[account(address = token::ID)]
@@ -81,7 +83,7 @@ pub struct ClaimStaking<'info> {
 }
 
 /// Claims rewards for a staked token
-pub fn handler(ctx: Context<ClaimStaking>) -> ProgramResult {
+pub fn handler(ctx: Context<ClaimStaking>) -> Result<()> {
     // Update staking data
     let staking = &ctx.accounts.staking;
     let staked_nft = &mut ctx.accounts.staked_nft;
