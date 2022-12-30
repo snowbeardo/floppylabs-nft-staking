@@ -97,6 +97,16 @@ mod staking {
         instructions::unstake_nft::handler(ctx)
     }
 
+    /// Stake an OCP NFT (ME royalties enforcement standard)
+    pub fn stake_ocp(
+        ctx: Context<StakeOcp>,
+        bumps: StakedNftBumps,
+        proof: Vec<[u8; 32]>,
+        rarity_multiplier: u64,
+    ) -> Result<()> {
+        instructions::stake_ocp::handler(ctx, bumps, proof, rarity_multiplier)
+    }
+
     /// Claim staking rewards
     pub fn claim_staking(ctx: Context<ClaimStaking>) -> Result<()> {
         instructions::claim_staking::handler(ctx)

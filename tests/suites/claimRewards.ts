@@ -15,7 +15,7 @@ import {
 } from "@solana/web3.js";
 import { Staking } from "../../target/types/staking";
 import { airdropUsers, assertFail, merkleCollection, FEES_LAMPORTS, FEES_ACCOUNT } from "../helpers";
-import { Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { getAccount, createMint, getOrCreateAssociatedTokenAccount, mintTo, transfer, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { MerkleTree } from "../helpers/merkleTree";
 
 export const testClaimRewards = (
@@ -33,6 +33,8 @@ export const testClaimRewards = (
     setProvider(provider);
 
     const program = workspace.Staking as Program<Staking>;
+
+    const dailyRewards = new BN(604800000000);
 
     const n = 10;
     let mintRewards: Token,
@@ -54,25 +56,41 @@ export const testClaimRewards = (
         .fill(0)
         .map(() => Keypair.generate());
       await airdropUsers([...holders, owner, stranger], provider);
-      mintRewards = await Token.createMint(
+      mintRewards = await createMint(
         provider.connection,
         owner,
         owner.publicKey,
         null,
-        9,
-        TOKEN_PROGRAM_ID
+        9
       );
       const nfts = await merkleCollection(owner, n, provider);
       mints = nfts.mints;
       await Promise.all(
         mints.map(async (mint, i) => {
           accounts[i] = (
-            await mint.getOrCreateAssociatedAccountInfo(holders[i].publicKey)
+            await getOrCreateAssociatedTokenAccount(
+              provider.connection,
+              holders[i],
+              mint,
+              holders[i].publicKey
+            )
           ).address;
           const ownerAccount = (
-            await mint.getOrCreateAssociatedAccountInfo(owner.publicKey)
+            await getOrCreateAssociatedTokenAccount(
+              provider.connection,
+              owner,
+              mint,
+              owner.publicKey
+            )
           ).address;
-          await mint.transfer(ownerAccount, accounts[i], owner, [], 1);
+          await transfer(
+            provider.connection,
+            owner,
+            ownerAccount,
+            accounts[i],
+            owner,
+            1
+          );
         })
       );
       tree = nfts.tree;
@@ -89,7 +107,7 @@ export const testClaimRewards = (
         [
           Buffer.from("rewards"),
           stakingKey.toBuffer(),
-          mintRewards.publicKey.toBuffer(),
+          mintRewards.toBuffer(),
         ],
         program.programId
       );
@@ -102,7 +120,7 @@ export const testClaimRewards = (
 
       await program.rpc.initializeStaking(
         bumpsInit,
-        state.dailyRewards,
+        dailyRewards,
         state.start,
         tree.getRootArray(),
         {
@@ -110,7 +128,7 @@ export const testClaimRewards = (
             stakingKey: stakingKey,
             staking: stakingAddress,
             escrow: escrow,
-            mint: mintRewards.publicKey,
+            mint: mintRewards,
             rewardsAccount: rewards,
             owner: owner.publicKey,
             tokenProgram: TOKEN_PROGRAM_ID,
@@ -121,20 +139,27 @@ export const testClaimRewards = (
         }
       );
 
-      // Mint tokens to the staking
-      await mintRewards.mintTo(rewards, owner, [], 10 ** 14);
+      // Mint tokens to the rewards wallet
+      await mintTo(
+          provider.connection,
+          owner,
+          mintRewards,
+          rewards,
+          owner,
+          10 ** 14
+      );
 
       const [stakedNft, stakedNftBump] = await PublicKey.findProgramAddress(
         [
           Buffer.from("staked_nft", "utf8"),
-          mints[indexStaked].publicKey.toBuffer(),
+          mints[indexStaked].toBuffer(),
         ],
         program.programId
       );
       const [deposit, depositBump] = await PublicKey.findProgramAddress(
         [
           Buffer.from("deposit", "utf8"),
-          mints[indexStaked].publicKey.toBuffer(),
+          mints[indexStaked].toBuffer(),
         ],
         program.programId
       );
@@ -163,7 +188,7 @@ export const testClaimRewards = (
             escrow: escrow,
             stakedNft: stakedNft,
             staker: holders[indexStaked].publicKey,
-            mint: mints[indexStaked].publicKey,
+            mint: mints[indexStaked],
             stakerAccount: accounts[indexStaked],
             depositAccount: deposit,
             feePayerAccount: feePayerAccount.publicKey,
@@ -181,14 +206,14 @@ export const testClaimRewards = (
       const [otherStakedNft, otherStakedNftBump] = await PublicKey.findProgramAddress(
         [
           Buffer.from("staked_nft", "utf8"),
-          mints[indexStakedOther].publicKey.toBuffer(),
+          mints[indexStakedOther].toBuffer(),
         ],
         program.programId
       );
       const [otherDeposit, otherDepositBump] = await PublicKey.findProgramAddress(
         [
           Buffer.from("deposit", "utf8"),
-          mints[indexStakedOther].publicKey.toBuffer(),
+          mints[indexStakedOther].toBuffer(),
         ],
         program.programId
       );
@@ -217,7 +242,7 @@ export const testClaimRewards = (
             escrow: escrow,
             stakedNft: otherStakedNft,
             staker: holders[indexStakedOther].publicKey,
-            mint: mints[indexStakedOther].publicKey,
+            mint: mints[indexStakedOther],
             stakerAccount: accounts[indexStakedOther],
             depositAccount: otherDeposit,
             feePayerAccount: feePayerAccountOther.publicKey,
@@ -245,19 +270,13 @@ export const testClaimRewards = (
       const [stakedNft, stakedNftBump] = await PublicKey.findProgramAddress(
         [
           Buffer.from("staked_nft", "utf8"),
-          mints[indexStaked].publicKey.toBuffer(),
+          mints[indexStaked].toBuffer(),
         ],
         program.programId
       );
 
       const stakingBefore = await program.account.staking.fetch(stakingAddress);
       const stakedNftBefore = await program.account.stakedNft.fetch(stakedNft);
-      const rewardToken = new Token(
-        provider.connection,
-        stakingBefore.mint,
-        TOKEN_PROGRAM_ID,
-        holders[indexStaked]
-      );
 
       const [rewardsAccount] = await PublicKey.findProgramAddress(
         [
@@ -268,11 +287,15 @@ export const testClaimRewards = (
         program.programId
       );
 
-      const stakerAccount = await rewardToken.getOrCreateAssociatedAccountInfo(
-        holders[indexStaked].publicKey
-      );
+      const stakerAccount =
+        await getOrCreateAssociatedTokenAccount(
+          provider.connection,
+          holders[indexStaked],
+          mintRewards,
+          holders[indexStaked].publicKey
+        );
 
-      const rewardsBefore = (await rewardToken.getAccountInfo(rewardsAccount))
+      const rewardsBefore = (await getAccount(provider.connection, rewardsAccount))
         .amount;
 
       const feesBalanceBefore = await provider.connection.getBalance(FEES_ACCOUNT);
@@ -283,7 +306,7 @@ export const testClaimRewards = (
           escrow: escrow,
           stakedNft: stakedNft,
           staker: holders[indexStaked].publicKey,
-          mint: rewardToken.publicKey,
+          mint: mintRewards,
           stakerAccount: stakerAccount.address,
           rewardsAccount: rewardsAccount,
           tokenProgram: TOKEN_PROGRAM_ID,
@@ -301,17 +324,20 @@ export const testClaimRewards = (
       const j = await program.account.staking.fetch(stakingAddress);
       const a = await program.account.stakedNft.fetch(stakedNft);
       const stakerAccountAfter =
-        await rewardToken.getOrCreateAssociatedAccountInfo(
+        await getOrCreateAssociatedTokenAccount(
+          provider.connection,
+          holders[indexStaked],
+          mintRewards,
           holders[indexStaked].publicKey
         );
 
-      const rewardsAfter = (await rewardToken.getAccountInfo(rewardsAccount))
+      const rewardsAfter = (await getAccount(provider.connection, rewardsAccount))
         .amount;
-      const rewardsGiven = rewardsBefore.sub(rewardsAfter);
+      const rewardsGiven = Number(rewardsBefore) - Number(rewardsAfter);
 
       // The rewards have been transferred to the staker
-      expect(stakerAccountAfter.amount.toString()).to.equal(
-        stakerAccount.amount.add(rewardsGiven).toString()
+      expect(Number(stakerAccountAfter.amount)).to.equal(
+        Number(stakerAccount.amount) + Number(rewardsGiven)
       );
 
       // The amount given is correct
@@ -320,15 +346,13 @@ export const testClaimRewards = (
       const rarityMultiplier = new BN(indexStaked);
 
       expect(rewardsGiven.toString()).to.equal(
-        state.dailyRewards
+        dailyRewards
           .mul(elapsed)
           .div(new BN(86400))
           .mul(rarityMultiplier)
           .div(new BN(100))
           .toString()
       );
-
-      console.log(rewardsGiven);
     });
 
     it("Can't claim an unstaked token", async () => {
@@ -343,7 +367,7 @@ export const testClaimRewards = (
       const [stakedNft, stakedNftBump] = await PublicKey.findProgramAddress(
         [
           Buffer.from("staked_nft", "utf8"),
-          mints[indexStaked + 1].publicKey.toBuffer(),
+          mints[indexStaked + 1].toBuffer(),
         ],
         program.programId
       );
@@ -359,9 +383,12 @@ export const testClaimRewards = (
         program.programId
       );
 
-      const stakerAccount = await mintRewards.getOrCreateAssociatedAccountInfo(
-        holders[indexStaked + 1].publicKey
-      );
+      const stakerAccount = await getOrCreateAssociatedTokenAccount(
+          provider.connection,
+          holders[indexStaked + 1],
+          mintRewards,
+          holders[indexStaked + 1].publicKey
+        );
 
       await assertFail(
         program.rpc.claimStaking({
@@ -370,7 +397,7 @@ export const testClaimRewards = (
             escrow: escrow,
             stakedNft: stakedNft,
             staker: holders[indexStaked + 1].publicKey,
-            mint: mintRewards.publicKey,
+            mint: mintRewards,
             stakerAccount: stakerAccount.address,
             rewardsAccount: rewardsAccount,
             tokenProgram: TOKEN_PROGRAM_ID,
@@ -382,6 +409,7 @@ export const testClaimRewards = (
         })
       );
     });
+
 
     it("Can't claim an unowned token", async () => {
       const [stakingAddress, stakingBump] = await PublicKey.findProgramAddress(
@@ -395,7 +423,7 @@ export const testClaimRewards = (
       const [stakedNft, stakedNftBump] = await PublicKey.findProgramAddress(
         [
           Buffer.from("staked_nft", "utf8"),
-          mints[indexStakedOther].publicKey.toBuffer(),
+          mints[indexStakedOther].toBuffer(),
         ],
         program.programId
       );
@@ -411,9 +439,12 @@ export const testClaimRewards = (
         program.programId
       );
 
-      const stakerAccount = await mintRewards.getOrCreateAssociatedAccountInfo(
-        holders[indexStaked].publicKey
-      );
+      const stakerAccount = await getOrCreateAssociatedTokenAccount(
+          provider.connection,
+          holders[indexStaked],
+          mintRewards,
+          holders[indexStaked].publicKey
+        );
 
       await assertFail(
         program.rpc.claimStaking({
@@ -422,7 +453,7 @@ export const testClaimRewards = (
             escrow: escrow,
             stakedNft: stakedNft,
             staker: holders[indexStaked].publicKey,
-            mint: mintRewards.publicKey,
+            mint: mintRewards,
             stakerAccount: stakerAccount.address,
             rewardsAccount: rewardsAccount,
             tokenProgram: TOKEN_PROGRAM_ID,

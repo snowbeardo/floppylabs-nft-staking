@@ -74,7 +74,7 @@ export const testInitializeStaking = (
         [
           Buffer.from("rewards"),
           state.stakingKey.toBuffer(),
-          mintRewards.publicKey.toBuffer(),
+          mintRewards.toBuffer(),
         ],
         program.programId
       );
@@ -97,7 +97,7 @@ export const testInitializeStaking = (
             stakingKey: state.stakingKey,
             staking: stakingAddress,
             escrow: escrow,
-            mint: mintRewards.publicKey,
+            mint: mintRewards,
             rewardsAccount: rewards,
             owner: state.owner.publicKey,
             tokenProgram: TOKEN_PROGRAM_ID,
@@ -112,7 +112,7 @@ export const testInitializeStaking = (
 
       expect(s.owner.toString()).to.equal(state.owner.publicKey.toString());
       expect(s.escrow.toString()).to.equal(escrow.toString());
-      expect(s.mint.toString()).to.equal(mintRewards.publicKey.toString());
+      expect(s.mint.toString()).to.equal(mintRewards.toString());
       expect(s.dailyRewards.toString()).to.equal(
         state.dailyRewards.toString()
       );
@@ -123,56 +123,4 @@ export const testInitializeStaking = (
       expect(s.feesExempt).to.equal(false);
     });
 
-    it("Only accepts positive multipliers", async () => {
-      const stakingKey = Keypair.generate().publicKey;
-      const [stakingAddress, stakingBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("staking"), stakingKey.toBuffer()],
-        program.programId
-      );
-      const [escrow, escrowBump] = await PublicKey.findProgramAddress(
-        [Buffer.from("escrow"), stakingKey.toBuffer()],
-        program.programId
-      );
-      const [rewards, rewardsBump] = await PublicKey.findProgramAddress(
-        [
-          Buffer.from("rewards"),
-          stakingKey.toBuffer(),
-          mintRewards.publicKey.toBuffer(),
-        ],
-        program.programId
-      );
-
-      const bumps = {
-        staking: stakingBump,
-        escrow: escrowBump,
-        rewards: rewardsBump,
-      };
-
-      const maximumRarity = new BN(mints.length - 1);
-
-      await assertFail(
-        program.rpc.initializeStaking(
-          bumps,
-          maximumRarity,
-          new BN(9999),
-          state.dailyRewards,
-          state.start,
-          tree.getRootArray(),
-          {
-            accounts: {
-              stakingKey: stakingKey,
-              staking: stakingAddress,
-              escrow: escrow,
-              mint: mintRewards.publicKey,
-              rewardsAccount: rewards,
-              owner: state.owner.publicKey,
-              tokenProgram: TOKEN_PROGRAM_ID,
-              rent: SYSVAR_RENT_PUBKEY,
-              systemProgram: SystemProgram.programId,
-            },
-            signers: [state.owner],
-          }
-        )
-      );
-    });
   });

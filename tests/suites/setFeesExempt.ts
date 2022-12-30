@@ -17,7 +17,7 @@ import {
 } from "@solana/web3.js";
 import { Staking } from "../../target/types/staking";
 import { airdropUsers, assertFail, merkleCollection, FEES_LAMPORTS, FEES_ACCOUNT } from "../helpers";
-import { Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { createMint, getOrCreateAssociatedTokenAccount, mintTo, transfer, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { MerkleTree } from "../helpers/merkleTree";
 // Importing local key for tests is far from ideal. TO-DO rethink the strategy
 // Using it as the fees exempt setter auth account
@@ -62,25 +62,41 @@ export const testSetFeesExempt = (
         .fill(0)
         .map(() => Keypair.generate());
       await airdropUsers([...holders, owner, stranger], provider);
-      mintRewards = await Token.createMint(
+      mintRewards = await createMint(
         provider.connection,
         owner,
         owner.publicKey,
         null,
-        9,
-        TOKEN_PROGRAM_ID
+        9
       );
       const nfts = await merkleCollection(owner, n, provider);
       mints = nfts.mints;
       await Promise.all(
         mints.map(async (mint, i) => {
           accounts[i] = (
-            await mint.getOrCreateAssociatedAccountInfo(holders[i].publicKey)
+            await getOrCreateAssociatedTokenAccount(
+              provider.connection,
+              holders[i],
+              mint,
+              holders[i].publicKey
+            )
           ).address;
           const ownerAccount = (
-            await mint.getOrCreateAssociatedAccountInfo(owner.publicKey)
+            await getOrCreateAssociatedTokenAccount(
+              provider.connection,
+              owner,
+              mint,
+              owner.publicKey
+            )
           ).address;
-          await mint.transfer(ownerAccount, accounts[i], owner, [], 1);
+          await transfer(
+            provider.connection,
+            owner,
+            ownerAccount,
+            accounts[i],
+            owner,
+            1
+          );
         })
       );
       tree = nfts.tree;
@@ -97,7 +113,7 @@ export const testSetFeesExempt = (
         [
           Buffer.from("rewards"),
           stakingKey.toBuffer(),
-          mintRewards.publicKey.toBuffer(),
+          mintRewards.toBuffer(),
         ],
         program.programId
       );
@@ -118,7 +134,7 @@ export const testSetFeesExempt = (
             stakingKey: stakingKey,
             staking: stakingAddress,
             escrow: escrow,
-            mint: mintRewards.publicKey,
+            mint: mintRewards,
             rewardsAccount: rewards,
             owner: state.owner.publicKey,
             tokenProgram: TOKEN_PROGRAM_ID,
@@ -130,7 +146,14 @@ export const testSetFeesExempt = (
       );
 
       // Mint tokens to the staking
-      await mintRewards.mintTo(rewards, owner, [], startingAmount.toNumber());
+      await mintTo(
+          provider.connection,
+          owner,
+          mintRewards,
+          rewards,
+          owner,
+          startingAmount.toNumber()
+      );
 
     });
 
@@ -146,14 +169,14 @@ export const testSetFeesExempt = (
       const [stakedNft, stakedNftBump] = await PublicKey.findProgramAddress(
         [
           Buffer.from("staked_nft", "utf8"),
-          mints[indexStaked].publicKey.toBuffer(),
+          mints[indexStaked].toBuffer(),
         ],
         program.programId
       );
       const [deposit, depositBump] = await PublicKey.findProgramAddress(
         [
           Buffer.from("deposit", "utf8"),
-          mints[indexStaked].publicKey.toBuffer(),
+          mints[indexStaked].toBuffer(),
         ],
         program.programId
       );
@@ -203,7 +226,7 @@ export const testSetFeesExempt = (
             escrow: escrow,
             stakedNft: stakedNft,
             staker: holders[indexStaked].publicKey,
-            mint: mints[indexStaked].publicKey,
+            mint: mints[indexStaked],
             stakerAccount: accounts[indexStaked],
             depositAccount: deposit,
             feePayerAccount: feePayerAccount.publicKey,
@@ -228,7 +251,7 @@ export const testSetFeesExempt = (
         holders[indexStaked].publicKey.toString()
       );
       expect(a.mint.toString()).to.equal(
-        mints[indexStaked].publicKey.toString()
+        mints[indexStaked].toString()
       );
       expect(a.rarityMultiplier.toString()).to.equal(new BN(indexStaked).toString());
       expect(a.lastClaim.lte(new BN(timeAfter))).to.equal(true);
@@ -254,7 +277,7 @@ export const testSetFeesExempt = (
           escrow: escrow,
           stakedNft: stakedNft,
           staker: holders[indexStaked].publicKey,
-          mint: mints[indexStaked].publicKey,
+          mint: mints[indexStaked],
           stakerAccount: accounts[indexStaked],
           depositAccount: deposit,
           feePayerAccount: unstakeFeePayerAccount.publicKey,
@@ -272,9 +295,13 @@ export const testSetFeesExempt = (
 
       expect(k.nftsStaked.toString()).to.equal(new BN(0).toString());
 
-      const stakerAccount = await mints[indexStaked].getOrCreateAssociatedAccountInfo(
-        holders[indexStaked].publicKey
-      );
+      const stakerAccount =
+        await getOrCreateAssociatedTokenAccount(
+          provider.connection,
+          holders[indexStaked],
+          mints[indexStaked],
+          holders[indexStaked].publicKey
+        );
       expect(stakerAccount.amount.toString()).to.equal(new BN(1).toString());
 
     });
