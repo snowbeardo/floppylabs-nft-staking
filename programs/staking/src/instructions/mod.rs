@@ -6,6 +6,7 @@ pub mod withdraw_rewards;
 pub mod stake_nft;
 pub mod unstake_nft;
 pub mod stake_ocp;
+pub mod unstake_ocp;
 pub mod claim_staking;
 
 pub use init_staking::*;
@@ -16,4 +17,5 @@ pub use withdraw_rewards::*;
 pub use stake_nft::*;
 pub use unstake_nft::*;
 pub use stake_ocp::*;
+pub use unstake_ocp::*;
 pub use claim_staking::*;

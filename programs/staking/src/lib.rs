@@ -107,6 +107,11 @@ mod staking {
         instructions::stake_ocp::handler(ctx, bumps, proof, rarity_multiplier)
     }
 
+    /// Unstake a staked OCP nft
+    pub fn unstake_ocp(ctx: Context<UnstakeOcp>) -> Result<()> {
+        instructions::unstake_ocp::handler(ctx)
+    }
+
     /// Claim staking rewards
     pub fn claim_staking(ctx: Context<ClaimStaking>) -> Result<()> {
         instructions::claim_staking::handler(ctx)

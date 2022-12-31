@@ -23,7 +23,7 @@ import {
   createTestMintAndWrap,
   DEVNET_POLICY_ALL
 } from "../helpers/ocpUtils";
-import { findFreezeAuthorityPk, findMintStatePk, CMT_PROGRAM, OCP_PROGRAM } from "@magiceden-oss/open_creator_protocol";
+import { findMintStatePk, CMT_PROGRAM, OCP_PROGRAM } from "@magiceden-oss/open_creator_protocol";
 import { findMetadataPda } from "@metaplex-foundation/js";
 
 const OCP_PROGRAM = new PublicKey("ocp4vWUzA2z2XMYJ3QhM9vWdyoyoQwAFJhRdVTbvo9E"); // OCP Devnet
@@ -156,17 +156,9 @@ export const testStakeOcp = (
         ],
         program.programId
       );
-      const [deposit, depositBump] = await PublicKey.findProgramAddress(
-        [
-          Buffer.from("deposit", "utf8"),
-          mints[indexStaked].toBuffer(),
-        ],
-        program.programId
-      );
 
       const bumps = {
         stakedNft: stakedNftBump,
-        deposit: depositBump,
       };
 
       const feePayerAccount = Keypair.generate();
@@ -192,14 +184,12 @@ export const testStakeOcp = (
             staker: owner.publicKey,
             mint: mints[indexStaked],
             stakerAccount: ownerAccount,
-            depositAccount: deposit,
             feePayerAccount: feePayerAccount.publicKey,
             feeReceiverAccount: FEES_ACCOUNT,
             tokenProgram: TOKEN_PROGRAM_ID,
             clock: SYSVAR_CLOCK_PUBKEY,
             rent: SYSVAR_RENT_PUBKEY,
             systemProgram: SystemProgram.programId,
-            freezeAuthority: findFreezeAuthorityPk(DEVNET_POLICY_ALL),
             ocpPolicy: DEVNET_POLICY_ALL,
             metadata: findMetadataPda(mints[indexStaked]),
             ocpMintState: findMintStatePk(mints[indexStaked]),
@@ -263,17 +253,9 @@ export const testStakeOcp = (
         ],
         program.programId
       );
-      const [deposit, depositBump] = await PublicKey.findProgramAddress(
-        [
-          Buffer.from("deposit", "utf8"),
-          mints[indexStaked].toBuffer(),
-        ],
-        program.programId
-      );
 
       const bumps = {
         stakedNft: stakedNftBump,
-        deposit: depositBump,
       };
 
       const feePayerAccount = Keypair.generate();
@@ -297,14 +279,12 @@ export const testStakeOcp = (
             staker: owner.publicKey,
             mint: mints[indexStaked],
             stakerAccount: ownerAccount,
-            depositAccount: deposit,
             feePayerAccount: feePayerAccount.publicKey,
             feeReceiverAccount: FEES_ACCOUNT,
             tokenProgram: TOKEN_PROGRAM_ID,
             clock: SYSVAR_CLOCK_PUBKEY,
             rent: SYSVAR_RENT_PUBKEY,
             systemProgram: SystemProgram.programId,
-            freezeAuthority: findFreezeAuthorityPk(DEVNET_POLICY_ALL),
             ocpPolicy: DEVNET_POLICY_ALL,
             metadata: findMetadataPda(mints[indexStaked]),
             ocpMintState: findMintStatePk(mints[indexStaked]),
@@ -349,17 +329,9 @@ export const testStakeOcp = (
         ],
         program.programId
       );
-      const [deposit, depositBump] = await PublicKey.findProgramAddress(
-        [
-          Buffer.from("deposit", "utf8"),
-          mints[indexStaked].toBuffer(),
-        ],
-        program.programId
-      );
 
       const bumps = {
         stakedNft: stakedNftBump,
-        deposit: depositBump,
       };
 
       const stakerAccount =
@@ -392,14 +364,12 @@ export const testStakeOcp = (
             staker: stranger.publicKey,
             mint: mints[indexStaked],
             stakerAccount: stakerAccount.address,
-            depositAccount: deposit,
             feePayerAccount: feePayerAccount.publicKey,
             feeReceiverAccount: FEES_ACCOUNT,
             tokenProgram: TOKEN_PROGRAM_ID,
             clock: SYSVAR_CLOCK_PUBKEY,
             rent: SYSVAR_RENT_PUBKEY,
             systemProgram: SystemProgram.programId,
-            freezeAuthority: findFreezeAuthorityPk(DEVNET_POLICY_ALL),
             ocpPolicy: DEVNET_POLICY_ALL,
             metadata: findMetadataPda(mints[indexStaked]),
             ocpMintState: findMintStatePk(mints[indexStaked]),
@@ -430,17 +400,9 @@ export const testStakeOcp = (
         ],
         program.programId
       );
-      const [deposit, depositBump] = await PublicKey.findProgramAddress(
-        [
-          Buffer.from("deposit", "utf8"),
-          mints[indexStaked].toBuffer(),
-        ],
-        program.programId
-      );
 
       const bumps = {
         stakedNft: stakedNftBump,
-        deposit: depositBump,
       };
 
       const feePayerAccount = Keypair.generate();
@@ -465,14 +427,12 @@ export const testStakeOcp = (
                 staker: owner.publicKey,
                 mint: mints[indexStaked],
                 stakerAccount: ownerAccount,
-                depositAccount: deposit,
                 feePayerAccount: feePayerAccount.publicKey,
                 feeReceiverAccount: FEES_ACCOUNT,
                 tokenProgram: TOKEN_PROGRAM_ID,
                 clock: SYSVAR_CLOCK_PUBKEY,
                 rent: SYSVAR_RENT_PUBKEY,
                 systemProgram: SystemProgram.programId,
-                freezeAuthority: findFreezeAuthorityPk(DEVNET_POLICY_ALL),
                 ocpPolicy: DEVNET_POLICY_ALL,
                 metadata: findMetadataPda(mints[indexStaked]),
                 ocpMintState: findMintStatePk(mints[indexStaked]),
@@ -503,17 +463,9 @@ export const testStakeOcp = (
         ],
         program.programId
       );
-      const [deposit, depositBump] = await PublicKey.findProgramAddress(
-        [
-          Buffer.from("deposit", "utf8"),
-          mints[indexStaked].toBuffer(),
-        ],
-        program.programId
-      );
 
       const bumps = {
         stakedNft: stakedNftBump,
-        deposit: depositBump,
       };
 
       const feePayerAccount = Keypair.generate();
@@ -538,14 +490,12 @@ export const testStakeOcp = (
                 staker: owner.publicKey,
                 mint: mints[indexStaked],
                 stakerAccount: ownerAccount,
-                depositAccount: deposit,
                 feePayerAccount: feePayerAccount.publicKey,
                 feeReceiverAccount: Keypair.generate().publicKey, // Not valid receiver account
                 tokenProgram: TOKEN_PROGRAM_ID,
                 clock: SYSVAR_CLOCK_PUBKEY,
                 rent: SYSVAR_RENT_PUBKEY,
                 systemProgram: SystemProgram.programId,
-                freezeAuthority: findFreezeAuthorityPk(DEVNET_POLICY_ALL),
                 ocpPolicy: DEVNET_POLICY_ALL,
                 metadata: findMetadataPda(mints[indexStaked]),
                 ocpMintState: findMintStatePk(mints[indexStaked]),

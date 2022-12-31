@@ -2,14 +2,12 @@ use anchor_lang::prelude::*;
 use anchor_lang::solana_program::sysvar;
 use anchor_spl::token::{self, Token, TokenAccount};
 
-use crate::{Staking, StakedNft, StakedNftBumps};
-use crate::merkle_proof;
-use crate::errors::StakingError;
 use crate::fees_wallet;
+use crate::errors::StakingError;
+use crate::{StakedNft, Staking};
 
 #[derive(Accounts)]
-#[instruction(bumps: StakedNftBumps)]
-pub struct StakeOcp<'info> {
+pub struct UnstakeOcp<'info> {
     /// The Staking state account
     #[account(
         mut,
@@ -23,7 +21,6 @@ pub struct StakeOcp<'info> {
 
     /// The account holding staking tokens, staking rewards and community funds
     #[account(
-        mut,
         seeds = [
             b"escrow",
             staking.key.as_ref()
@@ -34,31 +31,26 @@ pub struct StakeOcp<'info> {
     pub escrow: AccountInfo<'info>,
 
     /// The account representing the staked NFT
-    /// Doesn't use staking.key as one token can only be staked once
     #[account(
-        init,
-        payer = staker,
-        space = 8 + 2 + 32 + 32 + 32 + 8 + 8 + 8,
-        seeds = [
-            b"staked_nft",
-            mint.key().as_ref()
-        ],
-        bump
+        mut,
+        close = staker,
+        has_one = mint,
+        has_one = staker
     )]
     pub staked_nft: Box<Account<'info, StakedNft>>,
 
-    /// The owner of the NFT being staked
+    /// The owner of the staked NFT
     #[account(mut)]
     pub staker: Signer<'info>,
 
-    /// The mint of the NFT being staked
+    /// The mint of the staked NFT
     #[account(mut)]
     /// CHECK: TBD
     pub mint: AccountInfo<'info>,
 
-    /// The user account that holds the NFT
+    /// The account that will hold the unstaked NFT
     #[account(
-        mut, 
+        mut,
         has_one = mint,
         constraint = staker_account.owner == staker.key()
     )]
@@ -77,12 +69,6 @@ pub struct StakeOcp<'info> {
     /// The program for interacting with the token
     #[account(address = token::ID)]
     pub token_program: Program<'info, Token>,
-
-    /// Clock account used to know the time
-    pub clock: Sysvar<'info, Clock>,
-
-    pub rent: Sysvar<'info, Rent>,
-    pub system_program: Program<'info, System>,
 
     /// CHECK: checked in cpi
     pub ocp_policy: UncheckedAccount<'info>,
@@ -106,48 +92,9 @@ pub struct StakeOcp<'info> {
     pub instructions: UncheckedAccount<'info>,
 }
 
-impl<'info> StakeOcp<'info> {
-    fn lock_context(&self) -> CpiContext<'_, '_, '_, 'info,
-        open_creator_protocol::cpi::accounts::LockCtx<'info>> {
-        CpiContext::new(
-            self.ocp_program.to_account_info(),
-        open_creator_protocol::cpi::accounts::LockCtx {
-            policy: self.ocp_policy.to_account_info(),
-            mint: self.mint.to_account_info(),
-            metadata: self.metadata.to_account_info(),
-            mint_state: self.ocp_mint_state.to_account_info(),
-            from: self.staker.to_account_info(),
-            from_account: self.staker_account.to_account_info(),
-            to: self.escrow.to_account_info(),
-            cmt_program: self.cmt_program.to_account_info(),
-            instructions: self.instructions.to_account_info(),
-        },
-        )
-    }
-}
-
-pub fn handler(
-    ctx: Context<StakeOcp>,
-    bumps: StakedNftBumps,
-    proof: Vec<[u8; 32]>,
-    rarity_multiplier: u64
-) -> Result<()> {
+/// Unstake the staked_nft
+pub fn handler(ctx: Context<UnstakeOcp>) -> Result<()> {
     let staking = &mut ctx.accounts.staking;
-
-    // Check that staking started
-    if staking.start > ctx.accounts.clock.unix_timestamp {
-        return err!(StakingError::TooEarly);
-    }
-
-    // Verify the merkle leaf
-    let node = solana_program::keccak::hashv(&[
-        &[0x00],
-        &ctx.accounts.mint.key().to_bytes(),
-        &rarity_multiplier.to_le_bytes(),
-    ]);
-    if !merkle_proof::verify(proof, staking.root, node.0) {
-        return err!(StakingError::InvalidProof);
-    }
 
     // Charge fees if the project is not fees exempt
     if !staking.fees_exempt {
@@ -166,22 +113,35 @@ pub fn handler(
     }
 
     // Update staking data
-    staking.nfts_staked += 1;
+    staking.nfts_staked -= 1;
 
-    // Update staked_nft data
-    let staked_nft = &mut ctx.accounts.staked_nft;
-    staked_nft.bumps = bumps;
-    staked_nft.key = staking.key;
-    staked_nft.mint = ctx.accounts.mint.key();
-    staked_nft.staker = ctx.accounts.staker.key();
-    staked_nft.staked_at = ctx.accounts.clock.unix_timestamp;
-    staked_nft.last_claim = ctx.accounts.clock.unix_timestamp;
-    staked_nft.rarity_multiplier = rarity_multiplier;
+    let seeds = &[
+        b"escrow".as_ref(),
+        staking.key.as_ref(),
+        &[staking.bumps.escrow],
+    ];
+    let signer = &[&seeds[..]];
 
-    // Lock OCP (actual staking)
-    open_creator_protocol::cpi::lock(ctx.accounts.lock_context())?;
+    // Unlock OCP (actual unstaking)
+    //open_creator_protocol::cpi::unlock(ctx.accounts.unlock_context(signer))?;
+    let unlock_context:CpiContext<open_creator_protocol::cpi::accounts::UnlockCtx> =
+        CpiContext::new_with_signer(
+            ctx.accounts.ocp_program.to_account_info(),
+        open_creator_protocol::cpi::accounts::UnlockCtx {
+            policy: ctx.accounts.ocp_policy.to_account_info(),
+            mint: ctx.accounts.mint.to_account_info(),
+            metadata: ctx.accounts.metadata.to_account_info(),
+            mint_state: ctx.accounts.ocp_mint_state.to_account_info(),
+            from: ctx.accounts.escrow.to_account_info(),
+            cmt_program: ctx.accounts.cmt_program.to_account_info(),
+            instructions: ctx.accounts.instructions.to_account_info(),
+        },
+            signer,
+        );
 
-    msg!("Token staked");
+    open_creator_protocol::cpi::unlock(unlock_context)?;
+
+    msg!("Unstaked token");
 
     Ok(())
 }
