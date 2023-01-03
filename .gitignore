@@ -8,3 +8,5 @@ node_modules
 key.json
 key_fees_auth.json
 *.idea
+
+test-ledger

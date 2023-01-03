@@ -61,16 +61,6 @@ mod staking {
         )
     }
 
-    /// Sets the fees exempt property for the project.
-    /// Only FloppyLabs account has the authority to execute this
-    pub fn migrate_staking(
-        ctx: Context<MigrateStaking>,
-    ) -> Result<()> {
-        instructions::migrate_staking::handler(
-            ctx,
-        )
-    }
-
     /// Withdraw rewards from the vault
     pub fn withdraw_rewards(
         ctx: Context<WithdrawRewards>,
@@ -95,6 +85,21 @@ mod staking {
     /// Unstake a staked nft
     pub fn unstake_nft(ctx: Context<UnstakeNft>) -> Result<()> {
         instructions::unstake_nft::handler(ctx)
+    }
+
+    /// Stake an OCP NFT (ME royalties enforcement standard)
+    pub fn stake_ocp(
+        ctx: Context<StakeOcp>,
+        bumps: StakedNftBumps,
+        proof: Vec<[u8; 32]>,
+        rarity_multiplier: u64,
+    ) -> Result<()> {
+        instructions::stake_ocp::handler(ctx, bumps, proof, rarity_multiplier)
+    }
+
+    /// Unstake a staked OCP nft
+    pub fn unstake_ocp(ctx: Context<UnstakeOcp>) -> Result<()> {
+        instructions::unstake_ocp::handler(ctx)
     }
 
     /// Claim staking rewards

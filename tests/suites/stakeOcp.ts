@@ -5,6 +5,7 @@ import {
   Program,
   workspace,
   BN,
+  Wallet
 } from "@project-serum/anchor";
 import {
   PublicKey,
@@ -12,13 +13,22 @@ import {
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
   SYSVAR_CLOCK_PUBKEY,
+  SYSVAR_INSTRUCTIONS_PUBKEY,
 } from "@solana/web3.js";
 import { Staking } from "../../target/types/staking";
-import { airdropUsers, assertFail, merkleCollection, FEES_LAMPORTS, FEES_ACCOUNT } from "../helpers";
-import { createMint, getOrCreateAssociatedTokenAccount, mintTo, transfer, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { airdropUsers, assertFail, merkleCollection, merkleCollectionOcp, FEES_LAMPORTS, FEES_ACCOUNT } from "../helpers";
+import { createMint, getOrCreateAssociatedTokenAccount, mintTo, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { MerkleTree } from "../helpers/merkleTree";
+import {
+  createTestMintAndWrap,
+  DEVNET_POLICY_ALL
+} from "../helpers/ocpUtils";
+import { findMintStatePk, CMT_PROGRAM, OCP_PROGRAM } from "@magiceden-oss/open_creator_protocol";
+import { findMetadataPda } from "@metaplex-foundation/js";
 
-export const testStakeNft = (
+const OCP_PROGRAM = new PublicKey("ocp4vWUzA2z2XMYJ3QhM9vWdyoyoQwAFJhRdVTbvo9E"); // OCP Devnet
+
+export const testStakeOcp = (
   state: {
     owner: Keypair;
     staker: Keypair;
@@ -38,10 +48,11 @@ export const testStakeNft = (
     let mintRewards: Token,
       mints: Token[],
       holders: Keypair[],
-      accounts: PublicKey[] = Array(n).fill(new PublicKey(0));
+      ownerAccount: PublicKey;
+
     let tree: MerkleTree;
 
-    const indexStaked = 4;
+    const indexStaked = 0;
 
     let stakingKey: PublicKey, owner: Keypair, stranger: Keypair;
 
@@ -52,10 +63,7 @@ export const testStakeNft = (
       owner = Keypair.generate();
       stranger = Keypair.generate();
 
-      holders = Array(n)
-        .fill(0)
-        .map(() => Keypair.generate());
-      await airdropUsers([...holders, owner, stranger], provider);
+      await airdropUsers([owner, stranger], provider);
       mintRewards = await createMint(
         provider.connection,
         owner,
@@ -63,37 +71,18 @@ export const testStakeNft = (
         null,
         9
       );
-      const nfts = await merkleCollection(owner, n, provider);
+      const nfts = await merkleCollectionOcp(new Wallet(owner), n, provider);
       mints = nfts.mints;
-      await Promise.all(
-        mints.map(async (mint, i) => {
-          accounts[i] = (
-            await getOrCreateAssociatedTokenAccount(
-              provider.connection,
-              holders[i],
-              mint,
-              holders[i].publicKey
-            )
-          ).address;
-          const ownerAccount = (
-            await getOrCreateAssociatedTokenAccount(
-              provider.connection,
-              owner,
-              mint,
-              owner.publicKey
-            )
-          ).address;
-          await transfer(
-            provider.connection,
-            owner,
-            ownerAccount,
-            accounts[i],
-            owner,
-            1
-          );
-        })
-      );
       tree = nfts.tree;
+
+      ownerAccount = (
+        await getOrCreateAssociatedTokenAccount(
+          provider.connection,
+          owner,
+          mints[0],
+          owner.publicKey
+        )
+      ).address;
 
       const [stakingAddress, stakingBump] = await PublicKey.findProgramAddress(
         [Buffer.from("staking"), stakingKey.toBuffer()],
@@ -139,7 +128,7 @@ export const testStakeNft = (
         }
       );
 
-      // Mint tokens to the staking
+      // Mint reward tokens to the staking
       await mintTo(
           provider.connection,
           owner,
@@ -167,17 +156,9 @@ export const testStakeNft = (
         ],
         program.programId
       );
-      const [deposit, depositBump] = await PublicKey.findProgramAddress(
-        [
-          Buffer.from("deposit", "utf8"),
-          mints[indexStaked].toBuffer(),
-        ],
-        program.programId
-      );
 
       const bumps = {
         stakedNft: stakedNftBump,
-        deposit: depositBump,
       };
 
       const feePayerAccount = Keypair.generate();
@@ -185,13 +166,13 @@ export const testStakeNft = (
         programId: program.programId,
         space: 0,
         lamports: FEES_LAMPORTS,
-        fromPubkey: holders[indexStaked].publicKey,
+        fromPubkey: owner.publicKey,
         newAccountPubkey: feePayerAccount.publicKey
       });
 
       const feesBalanceBefore = await provider.connection.getBalance(FEES_ACCOUNT);
 
-      await program.rpc.stakeNft(
+      await program.rpc.stakeOcp(
         bumps,
         tree.getProofArray(indexStaked),
         new BN(indexStaked),
@@ -200,19 +181,24 @@ export const testStakeNft = (
             staking: stakingAddress,
             escrow: escrow,
             stakedNft: stakedNft,
-            staker: holders[indexStaked].publicKey,
+            staker: owner.publicKey,
             mint: mints[indexStaked],
-            stakerAccount: accounts[indexStaked],
-            depositAccount: deposit,
+            stakerAccount: ownerAccount,
             feePayerAccount: feePayerAccount.publicKey,
             feeReceiverAccount: FEES_ACCOUNT,
             tokenProgram: TOKEN_PROGRAM_ID,
             clock: SYSVAR_CLOCK_PUBKEY,
             rent: SYSVAR_RENT_PUBKEY,
             systemProgram: SystemProgram.programId,
+            ocpPolicy: DEVNET_POLICY_ALL,
+            metadata: findMetadataPda(mints[indexStaked]),
+            ocpMintState: findMintStatePk(mints[indexStaked]),
+            ocpProgram: OCP_PROGRAM,
+            cmtProgram: CMT_PROGRAM,
+            instructions: SYSVAR_INSTRUCTIONS_PUBKEY
           },
           instructions: [createFeePayerAccountIx],
-          signers: [holders[indexStaked], feePayerAccount],
+          signers: [owner, feePayerAccount],
         }
       );
 
@@ -223,7 +209,7 @@ export const testStakeNft = (
 
       expect(j.nftsStaked.toString()).to.equal(new BN(1).toString());
       expect(a.staker.toString()).to.equal(
-        holders[indexStaked].publicKey.toString()
+        owner.publicKey.toString()
       );
       expect(a.mint.toString()).to.equal(
         mints[indexStaked].toString()
@@ -267,17 +253,9 @@ export const testStakeNft = (
         ],
         program.programId
       );
-      const [deposit, depositBump] = await PublicKey.findProgramAddress(
-        [
-          Buffer.from("deposit", "utf8"),
-          mints[indexStaked].toBuffer(),
-        ],
-        program.programId
-      );
 
       const bumps = {
         stakedNft: stakedNftBump,
-        deposit: depositBump,
       };
 
       const feePayerAccount = Keypair.generate();
@@ -285,11 +263,11 @@ export const testStakeNft = (
         programId: program.programId,
         space: 0,
         lamports: FEES_LAMPORTS,
-        fromPubkey: holders[indexStaked].publicKey,
+        fromPubkey: owner.publicKey,
         newAccountPubkey: feePayerAccount.publicKey
       });
 
-      await assertFail(program.rpc.stakeNft(
+      await assertFail(program.rpc.stakeOcp(
         bumps,
         tree.getProofArray(indexStaked),
         new BN(indexStaked),
@@ -298,19 +276,24 @@ export const testStakeNft = (
             staking: stakingAddress,
             escrow: escrow,
             stakedNft: stakedNft,
-            staker: holders[indexStaked].publicKey,
+            staker: owner.publicKey,
             mint: mints[indexStaked],
-            stakerAccount: accounts[indexStaked],
-            depositAccount: deposit,
+            stakerAccount: ownerAccount,
             feePayerAccount: feePayerAccount.publicKey,
             feeReceiverAccount: FEES_ACCOUNT,
             tokenProgram: TOKEN_PROGRAM_ID,
             clock: SYSVAR_CLOCK_PUBKEY,
             rent: SYSVAR_RENT_PUBKEY,
             systemProgram: SystemProgram.programId,
+            ocpPolicy: DEVNET_POLICY_ALL,
+            metadata: findMetadataPda(mints[indexStaked]),
+            ocpMintState: findMintStatePk(mints[indexStaked]),
+            ocpProgram: OCP_PROGRAM,
+            cmtProgram: CMT_PROGRAM,
+            instructions: SYSVAR_INSTRUCTIONS_PUBKEY
           },
           instructions: [createFeePayerAccountIx],
-          signers: [holders[indexStaked], feePayerAccount],
+          signers: [owner, feePayerAccount],
         }
       ));
 
@@ -346,17 +329,9 @@ export const testStakeNft = (
         ],
         program.programId
       );
-      const [deposit, depositBump] = await PublicKey.findProgramAddress(
-        [
-          Buffer.from("deposit", "utf8"),
-          mints[indexStaked].toBuffer(),
-        ],
-        program.programId
-      );
 
       const bumps = {
         stakedNft: stakedNftBump,
-        deposit: depositBump,
       };
 
       const stakerAccount =
@@ -376,30 +351,35 @@ export const testStakeNft = (
         newAccountPubkey: feePayerAccount.publicKey
       });
 
-      await assertFail(
-        program.rpc.stakeNft(
-          bumps,
-          tree.getProofArray(indexStaked),
-          new BN(indexStaked),
-          {
-            accounts: {
-              staking: stakingAddress,
-              escrow: escrow,
-              stakedNft: stakedNft,
-              staker: stranger.publicKey,
-              mint: mints[indexStaked],
-              stakerAccount: stakerAccount.address,
-              depositAccount: deposit,
-              feePayerAccount: feePayerAccount.publicKey,
-              feeReceiverAccount: FEES_ACCOUNT,
-              tokenProgram: TOKEN_PROGRAM_ID,
-              clock: SYSVAR_CLOCK_PUBKEY,
-              rent: SYSVAR_RENT_PUBKEY,
-              systemProgram: SystemProgram.programId,
-            },
-            instructions: [createFeePayerAccountIx],
-            signers: [stranger, feePayerAccount],
-          }
+
+      await assertFail(program.rpc.stakeOcp(
+        bumps,
+        tree.getProofArray(indexStaked),
+        new BN(indexStaked),
+        {
+          accounts: {
+            staking: stakingAddress,
+            escrow: escrow,
+            stakedNft: stakedNft,
+            staker: stranger.publicKey,
+            mint: mints[indexStaked],
+            stakerAccount: stakerAccount.address,
+            feePayerAccount: feePayerAccount.publicKey,
+            feeReceiverAccount: FEES_ACCOUNT,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            clock: SYSVAR_CLOCK_PUBKEY,
+            rent: SYSVAR_RENT_PUBKEY,
+            systemProgram: SystemProgram.programId,
+            ocpPolicy: DEVNET_POLICY_ALL,
+            metadata: findMetadataPda(mints[indexStaked]),
+            ocpMintState: findMintStatePk(mints[indexStaked]),
+            ocpProgram: OCP_PROGRAM,
+            cmtProgram: CMT_PROGRAM,
+            instructions: SYSVAR_INSTRUCTIONS_PUBKEY
+          },
+          instructions: [createFeePayerAccountIx],
+          signers: [stranger, feePayerAccount],
+        }
         )
       );
     });
@@ -420,17 +400,9 @@ export const testStakeNft = (
         ],
         program.programId
       );
-      const [deposit, depositBump] = await PublicKey.findProgramAddress(
-        [
-          Buffer.from("deposit", "utf8"),
-          mints[indexStaked].toBuffer(),
-        ],
-        program.programId
-      );
 
       const bumps = {
         stakedNft: stakedNftBump,
-        deposit: depositBump,
       };
 
       const feePayerAccount = Keypair.generate();
@@ -438,35 +410,40 @@ export const testStakeNft = (
         programId: program.programId,
         space: 0,
         lamports: FEES_LAMPORTS / 2, // Pays half of the fees required
-        fromPubkey: holders[indexStaked].publicKey,
+        fromPubkey: owner.publicKey,
         newAccountPubkey: feePayerAccount.publicKey
       });
 
       await assertFail(
-        program.rpc.stakeNft(
-        bumps,
-        tree.getProofArray(indexStaked),
-        new BN(indexStaked),
-        {
-          accounts: {
-            staking: stakingAddress,
-            escrow: escrow,
-            stakedNft: stakedNft,
-            staker: holders[indexStaked].publicKey,
-            mint: mints[indexStaked],
-            stakerAccount: accounts[indexStaked],
-            depositAccount: deposit,
-            feePayerAccount: feePayerAccount.publicKey,
-            feeReceiverAccount: FEES_ACCOUNT,
-            tokenProgram: TOKEN_PROGRAM_ID,
-            clock: SYSVAR_CLOCK_PUBKEY,
-            rent: SYSVAR_RENT_PUBKEY,
-            systemProgram: SystemProgram.programId,
-          },
-          instructions: [createFeePayerAccountIx],
-          signers: [holders[indexStaked], feePayerAccount],
-        }
-        )
+        program.rpc.stakeOcp(
+            bumps,
+            tree.getProofArray(indexStaked),
+            new BN(indexStaked),
+            {
+              accounts: {
+                staking: stakingAddress,
+                escrow: escrow,
+                stakedNft: stakedNft,
+                staker: owner.publicKey,
+                mint: mints[indexStaked],
+                stakerAccount: ownerAccount,
+                feePayerAccount: feePayerAccount.publicKey,
+                feeReceiverAccount: FEES_ACCOUNT,
+                tokenProgram: TOKEN_PROGRAM_ID,
+                clock: SYSVAR_CLOCK_PUBKEY,
+                rent: SYSVAR_RENT_PUBKEY,
+                systemProgram: SystemProgram.programId,
+                ocpPolicy: DEVNET_POLICY_ALL,
+                metadata: findMetadataPda(mints[indexStaked]),
+                ocpMintState: findMintStatePk(mints[indexStaked]),
+                ocpProgram: OCP_PROGRAM,
+                cmtProgram: CMT_PROGRAM,
+                instructions: SYSVAR_INSTRUCTIONS_PUBKEY
+              },
+              instructions: [createFeePayerAccountIx],
+              signers: [owner, feePayerAccount],
+            }
+          )
       );
     });
 
@@ -486,17 +463,9 @@ export const testStakeNft = (
         ],
         program.programId
       );
-      const [deposit, depositBump] = await PublicKey.findProgramAddress(
-        [
-          Buffer.from("deposit", "utf8"),
-          mints[indexStaked].toBuffer(),
-        ],
-        program.programId
-      );
 
       const bumps = {
         stakedNft: stakedNftBump,
-        deposit: depositBump,
       };
 
       const feePayerAccount = Keypair.generate();
@@ -504,35 +473,40 @@ export const testStakeNft = (
         programId: program.programId,
         space: 0,
         lamports: FEES_LAMPORTS,
-        fromPubkey: holders[indexStaked].publicKey,
+        fromPubkey: owner.publicKey,
         newAccountPubkey: feePayerAccount.publicKey
       });
 
       await assertFail(
-        program.rpc.stakeNft(
-        bumps,
-        tree.getProofArray(indexStaked),
-        new BN(indexStaked),
-        {
-          accounts: {
-            staking: stakingAddress,
-            escrow: escrow,
-            stakedNft: stakedNft,
-            staker: holders[indexStaked].publicKey,
-            mint: mints[indexStaked],
-            stakerAccount: accounts[indexStaked],
-            depositAccount: deposit,
-            feePayerAccount: feePayerAccount.publicKey,
-            feeReceiverAccount: Keypair.generate().publicKey, // Not valid receiver account
-            tokenProgram: TOKEN_PROGRAM_ID,
-            clock: SYSVAR_CLOCK_PUBKEY,
-            rent: SYSVAR_RENT_PUBKEY,
-            systemProgram: SystemProgram.programId,
-          },
-          instructions: [createFeePayerAccountIx],
-          signers: [holders[indexStaked], feePayerAccount],
-        }
-        )
+        program.rpc.stakeOcp(
+            bumps,
+            tree.getProofArray(indexStaked),
+            new BN(indexStaked),
+            {
+              accounts: {
+                staking: stakingAddress,
+                escrow: escrow,
+                stakedNft: stakedNft,
+                staker: owner.publicKey,
+                mint: mints[indexStaked],
+                stakerAccount: ownerAccount,
+                feePayerAccount: feePayerAccount.publicKey,
+                feeReceiverAccount: Keypair.generate().publicKey, // Not valid receiver account
+                tokenProgram: TOKEN_PROGRAM_ID,
+                clock: SYSVAR_CLOCK_PUBKEY,
+                rent: SYSVAR_RENT_PUBKEY,
+                systemProgram: SystemProgram.programId,
+                ocpPolicy: DEVNET_POLICY_ALL,
+                metadata: findMetadataPda(mints[indexStaked]),
+                ocpMintState: findMintStatePk(mints[indexStaked]),
+                ocpProgram: OCP_PROGRAM,
+                cmtProgram: CMT_PROGRAM,
+                instructions: SYSVAR_INSTRUCTIONS_PUBKEY
+              },
+              instructions: [createFeePayerAccountIx],
+              signers: [owner, feePayerAccount],
+            }
+          )
       );
     });
 

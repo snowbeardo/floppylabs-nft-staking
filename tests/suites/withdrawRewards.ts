@@ -14,7 +14,7 @@ import {
 } from "@solana/web3.js";
 import { Staking } from "../../target/types/staking";
 import { airdropUsers, assertFail, merkleCollection } from "../helpers";
-import { Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { getAccount, createMint, getOrCreateAssociatedTokenAccount, mintTo, transfer, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { MerkleTree } from "../helpers/merkleTree";
 
 export const testWithdrawRewards = (
@@ -52,25 +52,41 @@ export const testWithdrawRewards = (
         .fill(0)
         .map(() => Keypair.generate());
       await airdropUsers([...holders, owner, stranger], provider);
-      mintRewards = await Token.createMint(
+      mintRewards = await createMint(
         provider.connection,
         owner,
         owner.publicKey,
         null,
-        9,
-        TOKEN_PROGRAM_ID
+        9
       );
       const nfts = await merkleCollection(owner, n, provider);
       mints = nfts.mints;
       await Promise.all(
         mints.map(async (mint, i) => {
           accounts[i] = (
-            await mint.getOrCreateAssociatedAccountInfo(holders[i].publicKey)
+            await getOrCreateAssociatedTokenAccount(
+              provider.connection,
+              holders[i],
+              mint,
+              holders[i].publicKey
+            )
           ).address;
           const ownerAccount = (
-            await mint.getOrCreateAssociatedAccountInfo(owner.publicKey)
+            await getOrCreateAssociatedTokenAccount(
+              provider.connection,
+              owner,
+              mint,
+              owner.publicKey
+            )
           ).address;
-          await mint.transfer(ownerAccount, accounts[i], owner, [], 1);
+          await transfer(
+            provider.connection,
+            owner,
+            ownerAccount,
+            accounts[i],
+            owner,
+            1
+          );
         })
       );
       tree = nfts.tree;
@@ -87,7 +103,7 @@ export const testWithdrawRewards = (
         [
           Buffer.from("rewards"),
           stakingKey.toBuffer(),
-          mintRewards.publicKey.toBuffer(),
+          mintRewards.toBuffer(),
         ],
         program.programId
       );
@@ -108,7 +124,7 @@ export const testWithdrawRewards = (
             stakingKey: stakingKey,
             staking: stakingAddress,
             escrow: escrow,
-            mint: mintRewards.publicKey,
+            mint: mintRewards,
             rewardsAccount: rewards,
             owner: owner.publicKey,
             tokenProgram: TOKEN_PROGRAM_ID,
@@ -120,7 +136,14 @@ export const testWithdrawRewards = (
       );
 
       // Mint tokens to the staking
-      await mintRewards.mintTo(rewards, owner, [], startingAmount.toNumber());
+      await mintTo(
+          provider.connection,
+          owner,
+          mintRewards,
+          rewards,
+          owner,
+          startingAmount.toNumber()
+      );
     });
 
     it("Withdraw rewards", async () => {
@@ -136,13 +159,16 @@ export const testWithdrawRewards = (
         [
           Buffer.from("rewards"),
           stakingKey.toBuffer(),
-          mintRewards.publicKey.toBuffer(),
+          mintRewards.toBuffer(),
         ],
         program.programId
       );
 
-      let ownerAccount = await mintRewards.getOrCreateAssociatedAccountInfo(
-        owner.publicKey
+      let ownerAccount = await getOrCreateAssociatedTokenAccount(
+              provider.connection,
+              owner,
+              mintRewards,
+              owner.publicKey
       );
 
       const withdraw = new BN(10 ** 9);
@@ -151,7 +177,7 @@ export const testWithdrawRewards = (
         accounts: {
           staking: stakingAddress,
           escrow: escrow,
-          mint: mintRewards.publicKey,
+          mint: mintRewards,
           rewardsAccount: rewards,
           owner: owner.publicKey,
           ownerAccount: ownerAccount.address,
@@ -160,13 +186,16 @@ export const testWithdrawRewards = (
         signers: [owner],
       });
 
-      expect(
-        (
-          await mintRewards.getAccountInfo(ownerAccount.address)
-        ).amount.toNumber()
-      ).to.equal(ownerAccount.amount.add(withdraw).toNumber());
-      expect(
-        (await mintRewards.getAccountInfo(rewards)).amount.toNumber()
-      ).to.equal(startingAmount.sub(withdraw).toNumber());
+      const expectedOwnerAmount = Number(withdraw) + Number(ownerAccount.amount);
+      const actualOwnerAmount = Number(
+        (await getAccount(provider.connection, ownerAccount.address)).amount
+      );
+      expect(expectedOwnerAmount).to.equal(actualOwnerAmount);
+
+      const expectedRewardsAmount = Number(startingAmount) - Number(withdraw);
+      const actualRewardsAmount = Number(
+        (await getAccount(provider.connection, rewards)).amount
+      );
+      expect(expectedRewardsAmount).to.equal(actualRewardsAmount);
     });
   });

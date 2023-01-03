@@ -19,6 +19,8 @@ import { testSetStaking } from "./suites/setStaking";
 import { testSetFeesExempt } from "./suites/setFeesExempt";
 import { testStakeNft } from "./suites/stakeNft";
 import { testUnstakeNft } from "./suites/unstakeNft";
+import { testStakeOcp } from "./suites/stakeOcp";
+import { testUnstakeOcp } from "./suites/unstakeOcp";
 import { testWithdrawRewards } from "./suites/withdrawRewards";
 
 describe("Staking Tests Suite", () => {
@@ -34,12 +36,7 @@ describe("Staking Tests Suite", () => {
     mints: [],
     tree: undefined,
     stakingKey: Keypair.generate().publicKey,
-    mintRewards: new Token(
-      provider.connection,
-      Keypair.generate().publicKey,
-      TOKEN_PROGRAM_ID,
-      Keypair.generate()
-    ),
+    mintRewards: undefined,
     dailyRewards: new BN(604800),
     start: new BN(Math.round(Date.now() / 1000)),
   };
@@ -69,5 +66,7 @@ describe("Staking Tests Suite", () => {
   testWithdrawRewards(state, provider);
   testStakeNft(state, provider);
   testUnstakeNft(state, provider);
+  testStakeOcp(state, provider);
+  testUnstakeOcp(state, provider);
   testClaimRewards(state, provider);
 });

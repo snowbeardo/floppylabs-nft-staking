@@ -14,7 +14,7 @@ import {
 } from "@solana/web3.js";
 import { Staking } from "../../target/types/staking";
 import { airdropUsers, assertFail, merkleCollection } from "../helpers";
-import { Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { createMint, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { MerkleTree } from "../helpers/merkleTree";
 
 export const testSetStaking = (
@@ -38,13 +38,12 @@ export const testSetStaking = (
 
     beforeEach(async () => {
       await airdropUsers([state.owner], provider);
-      mintRewards = await Token.createMint(
+      mintRewards = await createMint(
         provider.connection,
         state.owner,
         state.owner.publicKey,
         null,
-        9,
-        TOKEN_PROGRAM_ID
+        9
       );
       const nfts = await merkleCollection(state.owner, 5, provider);
       mints = nfts.mints;
@@ -111,9 +110,8 @@ export const testSetStaking = (
 
       await assertFail(
         program.rpc.setStaking(
-          newMaximumRarity,
-          newMaximumMultiplier,
           newDailyRewards,
+          state.start,
           tree.getRootArray(),
           {
             accounts: {
