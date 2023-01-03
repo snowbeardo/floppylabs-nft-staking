@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::sysvar;
-use anchor_spl::token::{self, Token, TokenAccount};
+use anchor_spl::token::{self, Token};
 
 use crate::fees_wallet;
 use crate::errors::StakingError;
@@ -47,14 +47,6 @@ pub struct UnstakeOcp<'info> {
     #[account(mut)]
     /// CHECK: TBD
     pub mint: AccountInfo<'info>,
-
-    /// The account that will hold the unstaked NFT
-    #[account(
-        mut,
-        has_one = mint,
-        constraint = staker_account.owner == staker.key()
-    )]
-    pub staker_account: Box<Account<'info, TokenAccount>>,
 
     /// The fee paying account
     #[account(mut)]

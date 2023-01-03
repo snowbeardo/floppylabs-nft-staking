@@ -244,7 +244,6 @@ export const testUnstakeOcp = (
             stakedNft: stakedNft,
             staker: owner.publicKey,
             mint: mints[indexStaked],
-            stakerAccount: ownerAccount,
             feePayerAccount: unstakeFeePayerAccount.publicKey,
             feeReceiverAccount: FEES_ACCOUNT,
             tokenProgram: TOKEN_PROGRAM_ID,
