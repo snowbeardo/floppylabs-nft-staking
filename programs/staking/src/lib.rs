@@ -61,16 +61,6 @@ mod staking {
         )
     }
 
-    /// Sets the fees exempt property for the project.
-    /// Only FloppyLabs account has the authority to execute this
-    pub fn migrate_staking(
-        ctx: Context<MigrateStaking>,
-    ) -> Result<()> {
-        instructions::migrate_staking::handler(
-            ctx,
-        )
-    }
-
     /// Withdraw rewards from the vault
     pub fn withdraw_rewards(
         ctx: Context<WithdrawRewards>,
