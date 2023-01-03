@@ -8,7 +8,7 @@ import {
   Idl,
 } from "@project-serum/anchor";
 import { BN } from "@project-serum/anchor";
-import { Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import {
   Keypair,
   PublicKey,
