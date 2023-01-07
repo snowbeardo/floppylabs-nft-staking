@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::sysvar;
-use anchor_spl::token::{self, Token, TokenAccount};
+use anchor_spl::token::{TokenAccount};
 
 use crate::{Staking, StakedNft, StakedNftBumps};
 use crate::merkle_proof;
@@ -72,16 +72,11 @@ pub struct StakeOcp<'info> {
     /// The fee receiving account
     #[account(mut, address = fees_wallet::ID)]
     /// CHECK: TBD
-    pub fee_receiver_account: AccountInfo<'info>,
-
-    /// The program for interacting with the token
-    #[account(address = token::ID)]
-    pub token_program: Program<'info, Token>,
+    pub fee_receiver_account: AccountInfo<'info>,    
 
     /// Clock account used to know the time
     pub clock: Sysvar<'info, Clock>,
 
-    pub rent: Sysvar<'info, Rent>,
     pub system_program: Program<'info, System>,
 
     /// CHECK: checked in cpi

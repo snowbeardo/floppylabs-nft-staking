@@ -1,6 +1,5 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::sysvar;
-use anchor_spl::token::{self, Token};
 
 use crate::fees_wallet;
 use crate::errors::StakingError;
@@ -56,11 +55,7 @@ pub struct UnstakeOcp<'info> {
     /// The fee receiving account
     #[account(mut, address = fees_wallet::ID)]
     /// CHECK: TBD
-    pub fee_receiver_account: AccountInfo<'info>,
-
-    /// The program for interacting with the token
-    #[account(address = token::ID)]
-    pub token_program: Program<'info, Token>,
+    pub fee_receiver_account: AccountInfo<'info>,    
 
     /// CHECK: checked in cpi
     pub ocp_policy: UncheckedAccount<'info>,
