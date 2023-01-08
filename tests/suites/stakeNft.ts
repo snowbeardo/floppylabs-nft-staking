@@ -12,6 +12,7 @@ import {
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
   SYSVAR_CLOCK_PUBKEY,
+  Transaction
 } from "@solana/web3.js";
 import { Staking } from "../../target/types/staking";
 import { airdropUsers, assertFail, merkleCollection, FEES_LAMPORTS, FEES_ACCOUNT } from "../helpers";
@@ -180,15 +181,6 @@ export const testStakeNft = (
         deposit: depositBump,
       };
 
-      const feePayerAccount = Keypair.generate();
-      const createFeePayerAccountIx = SystemProgram.createAccount({
-        programId: program.programId,
-        space: 0,
-        lamports: FEES_LAMPORTS,
-        fromPubkey: holders[indexStaked].publicKey,
-        newAccountPubkey: feePayerAccount.publicKey
-      });
-
       const feesBalanceBefore = await provider.connection.getBalance(FEES_ACCOUNT);
 
       await program.rpc.stakeNft(
@@ -204,15 +196,13 @@ export const testStakeNft = (
             mint: mints[indexStaked],
             stakerAccount: accounts[indexStaked],
             depositAccount: deposit,
-            feePayerAccount: feePayerAccount.publicKey,
             feeReceiverAccount: FEES_ACCOUNT,
             tokenProgram: TOKEN_PROGRAM_ID,
             clock: SYSVAR_CLOCK_PUBKEY,
             rent: SYSVAR_RENT_PUBKEY,
             systemProgram: SystemProgram.programId,
           },
-          instructions: [createFeePayerAccountIx],
-          signers: [holders[indexStaked], feePayerAccount],
+          signers: [holders[indexStaked]],
         }
       );
 
@@ -280,15 +270,6 @@ export const testStakeNft = (
         deposit: depositBump,
       };
 
-      const feePayerAccount = Keypair.generate();
-      const createFeePayerAccountIx = SystemProgram.createAccount({
-        programId: program.programId,
-        space: 0,
-        lamports: FEES_LAMPORTS,
-        fromPubkey: holders[indexStaked].publicKey,
-        newAccountPubkey: feePayerAccount.publicKey
-      });
-
       await assertFail(program.rpc.stakeNft(
         bumps,
         tree.getProofArray(indexStaked),
@@ -302,15 +283,13 @@ export const testStakeNft = (
             mint: mints[indexStaked],
             stakerAccount: accounts[indexStaked],
             depositAccount: deposit,
-            feePayerAccount: feePayerAccount.publicKey,
             feeReceiverAccount: FEES_ACCOUNT,
             tokenProgram: TOKEN_PROGRAM_ID,
             clock: SYSVAR_CLOCK_PUBKEY,
             rent: SYSVAR_RENT_PUBKEY,
             systemProgram: SystemProgram.programId,
           },
-          instructions: [createFeePayerAccountIx],
-          signers: [holders[indexStaked], feePayerAccount],
+          signers: [holders[indexStaked]],
         }
       ));
 
@@ -367,15 +346,6 @@ export const testStakeNft = (
           stranger.publicKey
         );
 
-      const feePayerAccount = Keypair.generate();
-      const createFeePayerAccountIx = SystemProgram.createAccount({
-        programId: program.programId,
-        space: 0,
-        lamports: FEES_LAMPORTS,
-        fromPubkey: stranger.publicKey,
-        newAccountPubkey: feePayerAccount.publicKey
-      });
-
       await assertFail(
         program.rpc.stakeNft(
           bumps,
@@ -390,21 +360,39 @@ export const testStakeNft = (
               mint: mints[indexStaked],
               stakerAccount: stakerAccount.address,
               depositAccount: deposit,
-              feePayerAccount: feePayerAccount.publicKey,
               feeReceiverAccount: FEES_ACCOUNT,
               tokenProgram: TOKEN_PROGRAM_ID,
               clock: SYSVAR_CLOCK_PUBKEY,
               rent: SYSVAR_RENT_PUBKEY,
               systemProgram: SystemProgram.programId,
             },
-            instructions: [createFeePayerAccountIx],
-            signers: [stranger, feePayerAccount],
+            signers: [stranger],
           }
         )
       );
     });
 
     it("Can't stake without paying enough fees", async () => {
+      // Empty user's wallet
+      const ownerBalanceBefore = await provider.connection.getBalance(holders[indexStaked].publicKey);
+      console.log(ownerBalanceBefore);
+      var transaction = new Transaction().add(
+          SystemProgram.transfer({
+            fromPubkey: holders[indexStaked].publicKey,
+            toPubkey: Keypair.generate().publicKey,
+            lamports: 4990000000 //will leave 0,007 SOL in the account, as it was funded with 5 SOL
+          }),
+      );
+      transaction.feePayer = holders[indexStaked].publicKey;
+      let blockhashObj = await provider.connection.getRecentBlockhash();
+      transaction.recentBlockhash = blockhashObj.blockhash;
+      transaction.sign(holders[indexStaked]);
+      let signature = await provider.connection.sendRawTransaction(transaction.serialize());
+      await provider.connection.confirmTransaction(signature);
+      const ownerBalanceAfter = await provider.connection.getBalance(holders[indexStaked].publicKey);
+      console.log(ownerBalanceAfter);
+
+
       const [stakingAddress, stakingBump] = await PublicKey.findProgramAddress(
         [Buffer.from("staking", "utf8"), stakingKey.toBuffer()],
         program.programId
@@ -433,15 +421,6 @@ export const testStakeNft = (
         deposit: depositBump,
       };
 
-      const feePayerAccount = Keypair.generate();
-      const createFeePayerAccountIx = SystemProgram.createAccount({
-        programId: program.programId,
-        space: 0,
-        lamports: FEES_LAMPORTS / 2, // Pays half of the fees required
-        fromPubkey: holders[indexStaked].publicKey,
-        newAccountPubkey: feePayerAccount.publicKey
-      });
-
       await assertFail(
         program.rpc.stakeNft(
         bumps,
@@ -456,15 +435,13 @@ export const testStakeNft = (
             mint: mints[indexStaked],
             stakerAccount: accounts[indexStaked],
             depositAccount: deposit,
-            feePayerAccount: feePayerAccount.publicKey,
             feeReceiverAccount: FEES_ACCOUNT,
             tokenProgram: TOKEN_PROGRAM_ID,
             clock: SYSVAR_CLOCK_PUBKEY,
             rent: SYSVAR_RENT_PUBKEY,
             systemProgram: SystemProgram.programId,
           },
-          instructions: [createFeePayerAccountIx],
-          signers: [holders[indexStaked], feePayerAccount],
+          signers: [holders[indexStaked]],
         }
         )
       );
@@ -499,15 +476,6 @@ export const testStakeNft = (
         deposit: depositBump,
       };
 
-      const feePayerAccount = Keypair.generate();
-      const createFeePayerAccountIx = SystemProgram.createAccount({
-        programId: program.programId,
-        space: 0,
-        lamports: FEES_LAMPORTS,
-        fromPubkey: holders[indexStaked].publicKey,
-        newAccountPubkey: feePayerAccount.publicKey
-      });
-
       await assertFail(
         program.rpc.stakeNft(
         bumps,
@@ -522,15 +490,13 @@ export const testStakeNft = (
             mint: mints[indexStaked],
             stakerAccount: accounts[indexStaked],
             depositAccount: deposit,
-            feePayerAccount: feePayerAccount.publicKey,
             feeReceiverAccount: Keypair.generate().publicKey, // Not valid receiver account
             tokenProgram: TOKEN_PROGRAM_ID,
             clock: SYSVAR_CLOCK_PUBKEY,
             rent: SYSVAR_RENT_PUBKEY,
             systemProgram: SystemProgram.programId,
           },
-          instructions: [createFeePayerAccountIx],
-          signers: [holders[indexStaked], feePayerAccount],
+          signers: [holders[indexStaked]],
         }
         )
       );

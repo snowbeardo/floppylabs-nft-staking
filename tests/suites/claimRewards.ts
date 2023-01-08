@@ -169,15 +169,6 @@ export const testClaimRewards = (
         deposit: depositBump,
       };
 
-      const feePayerAccount = Keypair.generate();
-      const createFeePayerAccountIx = SystemProgram.createAccount({
-        programId: program.programId,
-        space: 0,
-        lamports: FEES_LAMPORTS,
-        fromPubkey: holders[indexStaked].publicKey,
-        newAccountPubkey: feePayerAccount.publicKey
-      });
-
       await program.rpc.stakeNft(
         bumpsStakedNft,
         tree.getProofArray(indexStaked),
@@ -191,15 +182,13 @@ export const testClaimRewards = (
             mint: mints[indexStaked],
             stakerAccount: accounts[indexStaked],
             depositAccount: deposit,
-            feePayerAccount: feePayerAccount.publicKey,
             feeReceiverAccount: FEES_ACCOUNT,
             tokenProgram: TOKEN_PROGRAM_ID,
             clock: SYSVAR_CLOCK_PUBKEY,
             rent: SYSVAR_RENT_PUBKEY,
             systemProgram: SystemProgram.programId,
           },
-          instructions: [createFeePayerAccountIx],
-          signers: [holders[indexStaked], feePayerAccount],
+          signers: [holders[indexStaked]],
         }
       );
 
@@ -223,15 +212,6 @@ export const testClaimRewards = (
         deposit: otherDepositBump,
       };
 
-      const feePayerAccountOther = Keypair.generate();
-      const createFeePayerAccountIxOther = SystemProgram.createAccount({
-        programId: program.programId,
-        space: 0,
-        lamports: FEES_LAMPORTS,
-        fromPubkey: holders[indexStakedOther].publicKey,
-        newAccountPubkey: feePayerAccountOther.publicKey
-      });
-
       await program.rpc.stakeNft(
         bumpsStakedNftOther,
         tree.getProofArray(indexStakedOther),
@@ -245,15 +225,13 @@ export const testClaimRewards = (
             mint: mints[indexStakedOther],
             stakerAccount: accounts[indexStakedOther],
             depositAccount: otherDeposit,
-            feePayerAccount: feePayerAccountOther.publicKey,
             feeReceiverAccount: FEES_ACCOUNT,
             tokenProgram: TOKEN_PROGRAM_ID,
             clock: SYSVAR_CLOCK_PUBKEY,
             rent: SYSVAR_RENT_PUBKEY,
             systemProgram: SystemProgram.programId,
           },
-          instructions: [createFeePayerAccountIxOther],
-          signers: [holders[indexStakedOther], feePayerAccountOther],
+          signers: [holders[indexStakedOther]],
         }
       );
     });

@@ -156,15 +156,6 @@ export const testUnstakeNft = (
         deposit: depositBump,
       };
 
-      const feePayerAccount = Keypair.generate();
-      const createFeePayerAccountIx = SystemProgram.createAccount({
-        programId: program.programId,
-        space: 0,
-        lamports: FEES_LAMPORTS,
-        fromPubkey: holders[indexStaked].publicKey,
-        newAccountPubkey: feePayerAccount.publicKey
-      });
-
       await program.rpc.stakeNft(
         bumpsStakedNft,
         tree.getProofArray(indexStaked),
@@ -178,15 +169,13 @@ export const testUnstakeNft = (
             mint: mints[indexStaked],
             stakerAccount: accounts[indexStaked],
             depositAccount: deposit,
-            feePayerAccount: feePayerAccount.publicKey,
             feeReceiverAccount: FEES_ACCOUNT,
             tokenProgram: TOKEN_PROGRAM_ID,
             clock: SYSVAR_CLOCK_PUBKEY,
             rent: SYSVAR_RENT_PUBKEY,
             systemProgram: SystemProgram.programId,
           },
-          instructions: [createFeePayerAccountIx],
-          signers: [holders[indexStaked], feePayerAccount],
+          signers: [holders[indexStaked]],
         }
       );
     });
@@ -227,15 +216,6 @@ export const testUnstakeNft = (
         await program.account.staking.fetch(stakingAddress)
       ).nftsStaked;
 
-      const unstakeFeePayerAccount = Keypair.generate();
-      const createUnstakeFeePayerAccountIx = SystemProgram.createAccount({
-        programId: program.programId,
-        space: 0,
-        lamports: FEES_LAMPORTS,
-        fromPubkey: holders[indexStaked].publicKey,
-        newAccountPubkey: unstakeFeePayerAccount.publicKey
-      });
-
       const feesBalanceBefore = await provider.connection.getBalance(FEES_ACCOUNT);
 
       await program.rpc.unstakeNft({
@@ -247,12 +227,11 @@ export const testUnstakeNft = (
           mint: mints[indexStaked],
           stakerAccount: stakerAccount.address,
           depositAccount: deposit,
-          feePayerAccount: unstakeFeePayerAccount.publicKey,
           feeReceiverAccount: FEES_ACCOUNT,
+          systemProgram: SystemProgram.programId,
           tokenProgram: TOKEN_PROGRAM_ID,
         },
-        instructions: [createUnstakeFeePayerAccountIx],
-        signers: [holders[indexStaked], unstakeFeePayerAccount],
+        signers: [holders[indexStaked]],
       });
 
       const feesBalanceAfter = await provider.connection.getBalance(FEES_ACCOUNT);
@@ -312,15 +291,6 @@ export const testUnstakeNft = (
           stranger.publicKey
         );
 
-      const unstakeFeePayerAccount = Keypair.generate();
-      const createUnstakeFeePayerAccountIx = SystemProgram.createAccount({
-        programId: program.programId,
-        space: 0,
-        lamports: FEES_LAMPORTS,
-        fromPubkey: stranger.publicKey,
-        newAccountPubkey: unstakeFeePayerAccount.publicKey
-      });
-
       await assertFail(
         program.rpc.unstakeNft({
           accounts: {
@@ -331,12 +301,11 @@ export const testUnstakeNft = (
             mint: mints[indexStaked],
             stakerAccount: stakerAccount.address,
             depositAccount: deposit,
-            feePayerAccount: unstakeFeePayerAccount.publicKey,
             feeReceiverAccount: FEES_ACCOUNT,
+            systemProgram: SystemProgram.programId,
             tokenProgram: TOKEN_PROGRAM_ID,
           },
-          instructions: [createUnstakeFeePayerAccountIx],
-          signers: [stranger, unstakeFeePayerAccount],
+          signers: [stranger],
         })
       );
     });

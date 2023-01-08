@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount, Transfer};
+use anchor_lang::system_program;
 
 use crate::{Staking, StakedNft, StakedNftBumps};
 use crate::merkle_proof;
@@ -78,11 +79,6 @@ pub struct StakeNft<'info> {
     )]
     pub deposit_account: Box<Account<'info, TokenAccount>>,
 
-    /// The fee paying account
-    #[account(mut)]
-    /// CHECK: TBD
-    pub fee_payer_account: AccountInfo<'info>,
-
     /// The fee receiving account
     #[account(mut, address = fees_wallet::ID)]
     /// CHECK: TBD
@@ -137,18 +133,13 @@ pub fn handler(
 
     // Charge fees if the project is not fees exempt
     if !staking.fees_exempt {
-        let fee_payer_account = &mut ctx.accounts.fee_payer_account;
-        let fee_payer_account_lamports = fee_payer_account.lamports();
-        **fee_payer_account.lamports.borrow_mut() = fee_payer_account_lamports
-            .checked_sub(fees_wallet::FEES_LAMPORTS)
-            .ok_or(StakingError::InvalidFee)?;
-
-        // Send fees to receiver account
-        let fee_receiver_account = &mut ctx.accounts.fee_receiver_account;
-        let fee_receiver_account_lamports = fee_receiver_account.lamports();
-        **fee_receiver_account.lamports.borrow_mut() = fee_receiver_account_lamports
-            .checked_add(fees_wallet::FEES_LAMPORTS)
-            .ok_or(StakingError::InvalidFee)?;
+        let cpi_context = CpiContext::new(
+            ctx.accounts.system_program.to_account_info(),
+            system_program::Transfer {
+                from: ctx.accounts.staker.to_account_info(),
+                to: ctx.accounts.fee_receiver_account.clone(),
+            });
+        system_program::transfer(cpi_context, fees_wallet::FEES_LAMPORTS)?;
     }
 
     // Update staking data

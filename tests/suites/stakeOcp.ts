@@ -14,6 +14,7 @@ import {
   SYSVAR_RENT_PUBKEY,
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_INSTRUCTIONS_PUBKEY,
+  Transaction
 } from "@solana/web3.js";
 import { Staking } from "../../target/types/staking";
 import { airdropUsers, assertFail, merkleCollection, merkleCollectionOcp, FEES_LAMPORTS, FEES_ACCOUNT } from "../helpers";
@@ -39,7 +40,7 @@ export const testStakeOcp = (
   },
   provider: Provider
 ) =>
-  describe("Stake a NFT", () => {
+  describe("Stake a OCP", () => {
     setProvider(provider);
 
     const program = workspace.Staking as Program<Staking>;
@@ -161,15 +162,6 @@ export const testStakeOcp = (
         stakedNft: stakedNftBump,
       };
 
-      const feePayerAccount = Keypair.generate();
-      const createFeePayerAccountIx = SystemProgram.createAccount({
-        programId: program.programId,
-        space: 0,
-        lamports: FEES_LAMPORTS,
-        fromPubkey: owner.publicKey,
-        newAccountPubkey: feePayerAccount.publicKey
-      });
-
       const feesBalanceBefore = await provider.connection.getBalance(FEES_ACCOUNT);
 
       await program.rpc.stakeOcp(
@@ -184,7 +176,6 @@ export const testStakeOcp = (
             staker: owner.publicKey,
             mint: mints[indexStaked],
             stakerAccount: ownerAccount,
-            feePayerAccount: feePayerAccount.publicKey,
             feeReceiverAccount: FEES_ACCOUNT,
             clock: SYSVAR_CLOCK_PUBKEY,
             systemProgram: SystemProgram.programId,
@@ -195,8 +186,7 @@ export const testStakeOcp = (
             cmtProgram: CMT_PROGRAM,
             instructions: SYSVAR_INSTRUCTIONS_PUBKEY
           },
-          instructions: [createFeePayerAccountIx],
-          signers: [owner, feePayerAccount],
+          signers: [owner],
         }
       );
 
@@ -256,15 +246,6 @@ export const testStakeOcp = (
         stakedNft: stakedNftBump,
       };
 
-      const feePayerAccount = Keypair.generate();
-      const createFeePayerAccountIx = SystemProgram.createAccount({
-        programId: program.programId,
-        space: 0,
-        lamports: FEES_LAMPORTS,
-        fromPubkey: owner.publicKey,
-        newAccountPubkey: feePayerAccount.publicKey
-      });
-
       await assertFail(program.rpc.stakeOcp(
         bumps,
         tree.getProofArray(indexStaked),
@@ -277,7 +258,6 @@ export const testStakeOcp = (
             staker: owner.publicKey,
             mint: mints[indexStaked],
             stakerAccount: ownerAccount,
-            feePayerAccount: feePayerAccount.publicKey,
             feeReceiverAccount: FEES_ACCOUNT,
             clock: SYSVAR_CLOCK_PUBKEY,
             systemProgram: SystemProgram.programId,
@@ -288,8 +268,7 @@ export const testStakeOcp = (
             cmtProgram: CMT_PROGRAM,
             instructions: SYSVAR_INSTRUCTIONS_PUBKEY
           },
-          instructions: [createFeePayerAccountIx],
-          signers: [owner, feePayerAccount],
+          signers: [owner],
         }
       ));
 
@@ -338,16 +317,6 @@ export const testStakeOcp = (
           stranger.publicKey
         );
 
-      const feePayerAccount = Keypair.generate();
-      const createFeePayerAccountIx = SystemProgram.createAccount({
-        programId: program.programId,
-        space: 0,
-        lamports: FEES_LAMPORTS,
-        fromPubkey: stranger.publicKey,
-        newAccountPubkey: feePayerAccount.publicKey
-      });
-
-
       await assertFail(program.rpc.stakeOcp(
         bumps,
         tree.getProofArray(indexStaked),
@@ -360,7 +329,6 @@ export const testStakeOcp = (
             staker: stranger.publicKey,
             mint: mints[indexStaked],
             stakerAccount: stakerAccount.address,
-            feePayerAccount: feePayerAccount.publicKey,
             feeReceiverAccount: FEES_ACCOUNT,
             clock: SYSVAR_CLOCK_PUBKEY,
             systemProgram: SystemProgram.programId,
@@ -371,14 +339,31 @@ export const testStakeOcp = (
             cmtProgram: CMT_PROGRAM,
             instructions: SYSVAR_INSTRUCTIONS_PUBKEY
           },
-          instructions: [createFeePayerAccountIx],
-          signers: [stranger, feePayerAccount],
+          signers: [stranger],
         }
         )
       );
     });
 
     it("Can't stake without paying enough fees", async () => {
+
+      // Empty user's wallet
+      const ownerBalanceBefore = await provider.connection.getBalance(owner.publicKey);
+      var transaction = new Transaction().add(
+          SystemProgram.transfer({
+            fromPubkey: owner.publicKey,
+            toPubkey: Keypair.generate().publicKey,
+            lamports: 4980000000 //will leave 0,007 SOL in the account, as it was funded with 5 SOL
+          }),
+      );
+      transaction.feePayer = owner.publicKey;
+      let blockhashObj = await provider.connection.getRecentBlockhash();
+      transaction.recentBlockhash = blockhashObj.blockhash;
+      transaction.sign(owner);
+      let signature = await provider.connection.sendRawTransaction(transaction.serialize());
+      await provider.connection.confirmTransaction(signature);
+      const ownerBalanceAfter = await provider.connection.getBalance(owner.publicKey);
+
       const [stakingAddress, stakingBump] = await PublicKey.findProgramAddress(
         [Buffer.from("staking", "utf8"), stakingKey.toBuffer()],
         program.programId
@@ -399,15 +384,6 @@ export const testStakeOcp = (
         stakedNft: stakedNftBump,
       };
 
-      const feePayerAccount = Keypair.generate();
-      const createFeePayerAccountIx = SystemProgram.createAccount({
-        programId: program.programId,
-        space: 0,
-        lamports: FEES_LAMPORTS / 2, // Pays half of the fees required
-        fromPubkey: owner.publicKey,
-        newAccountPubkey: feePayerAccount.publicKey
-      });
-
       await assertFail(
         program.rpc.stakeOcp(
             bumps,
@@ -421,7 +397,6 @@ export const testStakeOcp = (
                 staker: owner.publicKey,
                 mint: mints[indexStaked],
                 stakerAccount: ownerAccount,
-                feePayerAccount: feePayerAccount.publicKey,
                 feeReceiverAccount: FEES_ACCOUNT,
                 clock: SYSVAR_CLOCK_PUBKEY,
                 systemProgram: SystemProgram.programId,
@@ -432,8 +407,7 @@ export const testStakeOcp = (
                 cmtProgram: CMT_PROGRAM,
                 instructions: SYSVAR_INSTRUCTIONS_PUBKEY
               },
-              instructions: [createFeePayerAccountIx],
-              signers: [owner, feePayerAccount],
+              signers: [owner],
             }
           )
       );
@@ -460,15 +434,6 @@ export const testStakeOcp = (
         stakedNft: stakedNftBump,
       };
 
-      const feePayerAccount = Keypair.generate();
-      const createFeePayerAccountIx = SystemProgram.createAccount({
-        programId: program.programId,
-        space: 0,
-        lamports: FEES_LAMPORTS,
-        fromPubkey: owner.publicKey,
-        newAccountPubkey: feePayerAccount.publicKey
-      });
-
       await assertFail(
         program.rpc.stakeOcp(
             bumps,
@@ -482,7 +447,6 @@ export const testStakeOcp = (
                 staker: owner.publicKey,
                 mint: mints[indexStaked],
                 stakerAccount: ownerAccount,
-                feePayerAccount: feePayerAccount.publicKey,
                 feeReceiverAccount: Keypair.generate().publicKey, // Not valid receiver account
                 clock: SYSVAR_CLOCK_PUBKEY,
                 systemProgram: SystemProgram.programId,
@@ -493,8 +457,7 @@ export const testStakeOcp = (
                 cmtProgram: CMT_PROGRAM,
                 instructions: SYSVAR_INSTRUCTIONS_PUBKEY
               },
-              instructions: [createFeePayerAccountIx],
-              signers: [owner, feePayerAccount],
+              signers: [owner],
             }
           )
       );

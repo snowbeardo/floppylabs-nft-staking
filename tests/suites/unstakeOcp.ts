@@ -39,7 +39,7 @@ export const testUnstakeOcp = (
   },
   provider: Provider
 ) =>
-  describe("Unstake a NFT", () => {
+  describe("Unstake a OCP", () => {
     setProvider(provider);
 
     const program = workspace.Staking as Program<Staking>;
@@ -151,15 +151,6 @@ export const testUnstakeOcp = (
         stakedNft: stakedNftBump,
       };
 
-      const feePayerAccount = Keypair.generate();
-      const createFeePayerAccountIx = SystemProgram.createAccount({
-        programId: program.programId,
-        space: 0,
-        lamports: FEES_LAMPORTS,
-        fromPubkey: owner.publicKey,
-        newAccountPubkey: feePayerAccount.publicKey
-      });
-
       const feesBalanceBefore = await provider.connection.getBalance(FEES_ACCOUNT);
 
       await program.rpc.stakeOcp(
@@ -174,7 +165,6 @@ export const testUnstakeOcp = (
             staker: owner.publicKey,
             mint: mints[indexStaked],
             stakerAccount: ownerAccount,
-            feePayerAccount: feePayerAccount.publicKey,
             feeReceiverAccount: FEES_ACCOUNT,
             clock: SYSVAR_CLOCK_PUBKEY,
             systemProgram: SystemProgram.programId,
@@ -185,8 +175,7 @@ export const testUnstakeOcp = (
             cmtProgram: CMT_PROGRAM,
             instructions: SYSVAR_INSTRUCTIONS_PUBKEY
           },
-          instructions: [createFeePayerAccountIx],
-          signers: [owner, feePayerAccount],
+          signers: [owner],
         }
       );
 
@@ -223,15 +212,6 @@ export const testUnstakeOcp = (
         await program.account.staking.fetch(stakingAddress)
       ).nftsStaked;
 
-      const unstakeFeePayerAccount = Keypair.generate();
-      const createUnstakeFeePayerAccountIx = SystemProgram.createAccount({
-        programId: program.programId,
-        space: 0,
-        lamports: FEES_LAMPORTS,
-        fromPubkey: owner.publicKey,
-        newAccountPubkey: unstakeFeePayerAccount.publicKey
-      });
-
       const feesBalanceBefore = await provider.connection.getBalance(FEES_ACCOUNT);
 
       await program.rpc.unstakeOcp(
@@ -242,8 +222,8 @@ export const testUnstakeOcp = (
             stakedNft: stakedNft,
             staker: owner.publicKey,
             mint: mints[indexStaked],
-            feePayerAccount: unstakeFeePayerAccount.publicKey,
             feeReceiverAccount: FEES_ACCOUNT,
+            systemProgram: SystemProgram.programId,
             ocpPolicy: DEVNET_POLICY_ALL,
             metadata: findMetadataPda(mints[indexStaked]),
             ocpMintState: findMintStatePk(mints[indexStaked]),
@@ -251,8 +231,7 @@ export const testUnstakeOcp = (
             cmtProgram: CMT_PROGRAM,
             instructions: SYSVAR_INSTRUCTIONS_PUBKEY
           },
-          instructions: [createUnstakeFeePayerAccountIx],
-          signers: [owner, unstakeFeePayerAccount],
+          signers: [owner],
         }
       );
 
