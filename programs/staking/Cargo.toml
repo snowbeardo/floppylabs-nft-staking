@@ -17,9 +17,10 @@ default = []
 
 [dependencies]
 solana-program = "1.10.40"
-anchor-lang = "0.25.0"
-anchor-spl = "0.25.0"
+anchor-lang = "0.26.0"
+anchor-spl = "0.26.0"
 thiserror = "1.0.30"
 pyth-client = "0.2.2"
 spl-token = { version = "^3.3.1", features = ["no-entrypoint"] }
-open_creator_protocol = { version = "0.2.9", features = ["cpi"] }
+open_creator_protocol = { version = "0.3.2", features = ["cpi"] }
+mpl-token-metadata = "1.8.1"

@@ -21,6 +21,8 @@ import { testStakeNft } from "./suites/stakeNft";
 import { testUnstakeNft } from "./suites/unstakeNft";
 import { testStakeOcp } from "./suites/stakeOcp";
 import { testUnstakeOcp } from "./suites/unstakeOcp";
+import { testStakeMeta } from "./suites/stakeMeta";
+import { testUnstakeMeta } from "./suites/unstakeMeta";
 import { testWithdrawRewards } from "./suites/withdrawRewards";
 
 describe("Staking Tests Suite", () => {
@@ -68,5 +70,7 @@ describe("Staking Tests Suite", () => {
   testUnstakeNft(state, provider);
   testStakeOcp(state, provider);
   testUnstakeOcp(state, provider);
+  testStakeMeta(state, provider);
+  testUnstakeMeta(state, provider);
   testClaimRewards(state, provider);
 });

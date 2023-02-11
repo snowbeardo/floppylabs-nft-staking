@@ -102,6 +102,21 @@ mod staking {
         instructions::unstake_ocp::handler(ctx)
     }
 
+    /// Stake using Metaplex's Token Metadata program (support for pNFT)
+    pub fn stake_meta(
+        ctx: Context<StakeMeta>,
+        bumps: StakedNftBumps,
+        proof: Vec<[u8; 32]>,
+        rarity_multiplier: u64,
+    ) -> Result<()> {
+        instructions::stake_meta::handler(ctx, bumps, proof, rarity_multiplier)
+    }
+
+    /// Unstake a staked MIP-1 nft
+    pub fn unstake_meta(ctx: Context<UnstakeMeta>) -> Result<()> {
+        instructions::unstake_meta::handler(ctx)
+    }
+
     /// Claim staking rewards
     pub fn claim_staking(ctx: Context<ClaimStaking>) -> Result<()> {
         instructions::claim_staking::handler(ctx)
