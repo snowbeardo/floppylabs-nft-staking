@@ -30,7 +30,7 @@ import { PROGRAM_ID as TOKEN_AUTH_RULES_ID  } from "@metaplex-foundation/mpl-tok
 const OCP_PROGRAM = new PublicKey("ocp4vWUzA2z2XMYJ3QhM9vWdyoyoQwAFJhRdVTbvo9E"); // OCP Devnet
 const TOKEN_METADATA_PROGRAM = new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"); // Metaplex 
 
-export const testStakeMeta = (
+export const testStakeMpl = (
   state: {
     owner: Keypair;
     staker: Keypair;
@@ -41,7 +41,7 @@ export const testStakeMeta = (
   },
   provider: Provider
 ) =>
-  describe("Stake a MIP-1 NFT", () => {
+  describe("Stake using MPL Token Metadata", () => {
     setProvider(provider);
 
     const program = workspace.Staking as Program<Staking>;
@@ -198,7 +198,7 @@ export const testStakeMeta = (
         TOKEN_METADATA_PROGRAM,
       );
 
-      await program.rpc.stakeMeta(
+      await program.rpc.stakeMpl(
         bumps,
         tree.getProofArray(pNFTIndex),
         new BN(pNFTIndex),
@@ -314,7 +314,7 @@ export const testStakeMeta = (
         TOKEN_METADATA_PROGRAM,
       );
 
-      await program.rpc.stakeMeta(
+      await program.rpc.stakeMpl(
         bumps,
         tree.getProofArray(NFTIndex),
         new BN(NFTIndex),

@@ -103,18 +103,18 @@ mod staking {
     }
 
     /// Stake using Metaplex's Token Metadata program (support for pNFT)
-    pub fn stake_meta(
-        ctx: Context<StakeMeta>,
+    pub fn stake_mpl(
+        ctx: Context<StakeMpl>,
         bumps: StakedNftBumps,
         proof: Vec<[u8; 32]>,
         rarity_multiplier: u64,
     ) -> Result<()> {
-        instructions::stake_meta::handler(ctx, bumps, proof, rarity_multiplier)
+        instructions::stake_mpl::handler(ctx, bumps, proof, rarity_multiplier)
     }
 
-    /// Unstake a staked MIP-1 nft
-    pub fn unstake_meta(ctx: Context<UnstakeMeta>) -> Result<()> {
-        instructions::unstake_meta::handler(ctx)
+    /// Unstake using Metaplex's Token Metadata program (support for pNFT)
+    pub fn unstake_mpl(ctx: Context<UnstakeMpl>) -> Result<()> {
+        instructions::unstake_mpl::handler(ctx)
     }
 
     /// Claim staking rewards

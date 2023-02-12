@@ -33,7 +33,7 @@ const TOKEN_METADATA_PROGRAM = new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a
 const pNFTIndex = 0;
 const NFTIndex = 1;
 
-export const testUnstakeMeta = (
+export const testUnstakeMpl = (
   state: {
     owner: Keypair;
     staker: Keypair;
@@ -44,7 +44,7 @@ export const testUnstakeMeta = (
   },
   provider: Provider
 ) =>
-  describe("Unstake a MIP-1 NFT", () => {
+  describe("Unstake using MPL Token Metadata", () => {
     setProvider(provider);
 
     const program = workspace.Staking as Program<Staking>;
@@ -198,7 +198,7 @@ export const testUnstakeMeta = (
         TOKEN_METADATA_PROGRAM,
       );
 
-      await program.rpc.stakeMeta(
+      await program.rpc.stakeMpl(
         bumps,
         tree.getProofArray(pNFTIndex),
         new BN(pNFTIndex),
@@ -234,7 +234,7 @@ export const testUnstakeMeta = (
 
       const feesBalanceBefore = await provider.connection.getBalance(FEES_ACCOUNT);      
 
-      await program.rpc.unstakeMeta(        
+      await program.rpc.unstakeMpl(        
         {
           accounts: {
             staking: stakingAddress,
@@ -343,7 +343,7 @@ export const testUnstakeMeta = (
         TOKEN_METADATA_PROGRAM,
       );
 
-      await program.rpc.stakeMeta(
+      await program.rpc.stakeMpl(
         bumps,
         tree.getProofArray(NFTIndex),
         new BN(NFTIndex),
@@ -379,7 +379,7 @@ export const testUnstakeMeta = (
 
       const feesBalanceBefore = await provider.connection.getBalance(FEES_ACCOUNT);      
 
-      await program.rpc.unstakeMeta(        
+      await program.rpc.unstakeMpl(        
         {
           accounts: {
             staking: stakingAddress,
@@ -484,7 +484,7 @@ export const testUnstakeMeta = (
         TOKEN_METADATA_PROGRAM,
       );
 
-      await program.rpc.stakeMeta(
+      await program.rpc.stakeMpl(
         bumps,
         tree.getProofArray(pNFTIndex),
         new BN(pNFTIndex),
@@ -514,7 +514,7 @@ export const testUnstakeMeta = (
 
       // Unstake  
 
-      await program.rpc.unstakeMeta(        
+      await program.rpc.unstakeMpl(        
         {
           accounts: {
             staking: stakingAddress,
@@ -538,7 +538,7 @@ export const testUnstakeMeta = (
         }
       );
 
-      await program.rpc.stakeMeta(
+      await program.rpc.stakeMpl(
         bumps,
         tree.getProofArray(pNFTIndex),
         new BN(pNFTIndex),
@@ -628,7 +628,7 @@ export const testUnstakeMeta = (
         TOKEN_METADATA_PROGRAM,
       );
 
-      await program.rpc.stakeMeta(
+      await program.rpc.stakeMpl(
         bumps,
         tree.getProofArray(NFTIndex),
         new BN(NFTIndex),
@@ -658,7 +658,7 @@ export const testUnstakeMeta = (
 
       // Unstake  
 
-      await program.rpc.unstakeMeta(        
+      await program.rpc.unstakeMpl(        
         {
           accounts: {
             staking: stakingAddress,
@@ -682,7 +682,7 @@ export const testUnstakeMeta = (
         }
       );
 
-      await program.rpc.stakeMeta(
+      await program.rpc.stakeMpl(
         bumps,
         tree.getProofArray(NFTIndex),
         new BN(NFTIndex),
