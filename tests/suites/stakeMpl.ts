@@ -14,6 +14,8 @@ import {
   SYSVAR_RENT_PUBKEY,
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_INSTRUCTIONS_PUBKEY,
+  ComputeBudgetProgram,
+  sendAndConfirmTransaction,
   Transaction
 } from "@solana/web3.js";
 import { Staking } from "../../target/types/staking";
@@ -26,6 +28,7 @@ import {
 } from "../helpers/ocpUtils";
 import { TokenRecord, TokenState } from "@metaplex-foundation/mpl-token-metadata";
 import { PROGRAM_ID as TOKEN_AUTH_RULES_ID  } from "@metaplex-foundation/mpl-token-auth-rules";
+import { decode } from '@msgpack/msgpack';
 
 const OCP_PROGRAM = new PublicKey("ocp4vWUzA2z2XMYJ3QhM9vWdyoyoQwAFJhRdVTbvo9E"); // OCP Devnet
 const TOKEN_METADATA_PROGRAM = new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"); // Metaplex 
@@ -99,7 +102,7 @@ export const testStakeMpl = (
         staking: stakingBump,
         escrow: escrowBump,
         rewards: rewardsBump,
-      };
+      };      
 
       await program.rpc.initializeStaking(
         bumps,
@@ -223,6 +226,7 @@ export const testStakeMpl = (
             instructions: SYSVAR_INSTRUCTIONS_PUBKEY
           },
           signers: [owner],
+          instructions: [ComputeBudgetProgram.setComputeUnitLimit({ units: 1400000 })]
         }
       );
       
@@ -312,8 +316,8 @@ export const testStakeMpl = (
           ownerAccount.toBuffer(),
         ],
         TOKEN_METADATA_PROGRAM,
-      );
-
+      );      
+    
       await program.rpc.stakeMpl(
         bumps,
         tree.getProofArray(NFTIndex),
@@ -339,6 +343,7 @@ export const testStakeMpl = (
             instructions: SYSVAR_INSTRUCTIONS_PUBKEY
           },
           signers: [owner],
+          instructions: [ComputeBudgetProgram.setComputeUnitLimit({ units: 1400000 })]
         }
       );
 

@@ -117,6 +117,12 @@ mod staking {
         instructions::unstake_mpl::handler(ctx)
     }
 
+    /// Unstake using Metaplex's Token Metadata program a token custodied by our escrow 
+    /// Mainly used to support non pNFT staked collections migrating to pNFT
+    pub fn unstake_mpl_custodial(ctx: Context<UnstakeMplCustodial>) -> Result<()> {
+        instructions::unstake_mpl_custodial::handler(ctx)
+    }
+
     /// Claim staking rewards
     pub fn claim_staking(ctx: Context<ClaimStaking>) -> Result<()> {
         instructions::claim_staking::handler(ctx)

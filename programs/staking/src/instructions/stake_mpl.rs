@@ -161,7 +161,7 @@ pub fn handler(
     // Obtain pNFT Stake delegate
     let mut delegate_builder = DelegateBuilder::new();
     delegate_builder
-        .delegate(ctx.accounts.escrow.key())
+        .delegate(staking.key())
         .mint(ctx.accounts.mint.key())
         .metadata(ctx.accounts.metadata.key())
         .master_edition(ctx.accounts.master_edition.key())
@@ -191,7 +191,7 @@ pub fn handler(
     invoke(&delegate.instruction(),
            &[
                ctx.accounts.token_metadata_program.to_account_info(),
-               ctx.accounts.escrow.to_account_info(),
+               staking.to_account_info(),
                ctx.accounts.metadata.to_account_info(),
                ctx.accounts.master_edition.to_account_info(),
                ctx.accounts.token_record.to_account_info(),
@@ -208,15 +208,15 @@ pub fn handler(
 
     // Lock pNFT (actual staking)
     let seeds = &[
-        b"escrow".as_ref(),
+        b"staking".as_ref(),
         staking.key.as_ref(),
-        &[staking.bumps.escrow],
+        &[staking.bumps.staking],
     ];
     let signer = &[&seeds[..]];
 
     let mut lock_builder = LockBuilder::new();
     lock_builder
-        .authority(ctx.accounts.escrow.key())
+        .authority(staking.key())
         .token(ctx.accounts.staker_account.key())
         .token_owner(ctx.accounts.staker.key())
         .mint(ctx.accounts.mint.key())
@@ -237,7 +237,7 @@ pub fn handler(
 
     invoke_signed(&lock.instruction(),
            &[
-               ctx.accounts.escrow.to_account_info(),
+               staking.to_account_info(),
                ctx.accounts.staker.to_account_info(),
                ctx.accounts.staker_account.to_account_info(),
                ctx.accounts.mint.to_account_info(),

@@ -8,6 +8,7 @@ pub mod stake_ocp;
 pub mod unstake_ocp;
 pub mod stake_mpl;
 pub mod unstake_mpl;
+pub mod unstake_mpl_custodial;
 pub mod claim_staking;
 
 pub use init_staking::*;
@@ -20,4 +21,5 @@ pub use stake_ocp::*;
 pub use unstake_ocp::*;
 pub use stake_mpl::*;
 pub use unstake_mpl::*;
+pub use unstake_mpl_custodial::*;
 pub use claim_staking::*;

@@ -35,50 +35,8 @@ export async function mintMetaplex(
     // Default to TOKEN_METADATA_PROGRAM, as it is the one to be passed when there is no actual ruleset
     let ruleSetPda: PublicKey = TOKEN_METADATA_PROGRAM;
     if (isProgrammable) {
-      const ruleSetName = 'test';
-      const ruleSet = {
-        libVersion: 1,
-        ruleSetName: ruleSetName,
-        owner: Array.from(wallet.payer.publicKey.toBytes()),
-        operations: {
-          "Delegate:Staking": "Pass",
-        },
-      };
-      const serializedRuleSet = encode(ruleSet);
-
-      // Find the ruleset PDA
-      const [ruleSetPdaFetched] = PublicKey.findProgramAddressSync(
-        [Buffer.from('rule_set'), wallet.payer.publicKey.toBuffer(), Buffer.from(ruleSetName)],
-        TOKEN_AUTH_RULES_ID,
-      );
-      ruleSetPda = ruleSetPdaFetched;
-
-      // Create the ruleset at the PDA address with the serialized ruleset values.
-      const createRuleSetAccounts: CreateOrUpdateInstructionAccounts = {
-        ruleSetPda,
-        payer: wallet.payer.publicKey,
-        bufferPda: TOKEN_AUTH_RULES_ID,
-      };
-  
-      const createRuleSetArgs: CreateOrUpdateInstructionArgs = {
-        createOrUpdateArgs: {
-          __kind: 'V1',
-          serializedRuleSet,
-        },
-      };
-  
-      const createRuleSetInstruction = createCreateOrUpdateInstruction(
-        createRuleSetAccounts,
-        createRuleSetArgs,
-      );
-
-      const tx = new Transaction().add(createRuleSetInstruction);
-      tx.feePayer = wallet.payer.publicKey;
-      let blockhashObj = await connection.getRecentBlockhash();
-      tx.recentBlockhash = blockhashObj.blockhash;
-      tx.sign(wallet.payer);
-      let signature = await connection.sendRawTransaction(tx.serialize());
-      await connection.confirmTransaction(signature);
+      //ruleSetPda = new PublicKey("eBJLFYPxJmMGKuFwpDWkzxZeUrad92kZRC5BJLpzyT9"); // Metaplex defaulta allowlist
+      ruleSetPda = new PublicKey("EkHNhudhddaY5nj7exQzJmCzU2xQQLFCGAXHXZqZHBPg"); // FloppyLabs custom allowlist
     }
 
     const transactionBuilder = await metaplex

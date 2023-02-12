@@ -14,7 +14,7 @@ import {
   SYSVAR_RENT_PUBKEY,
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_INSTRUCTIONS_PUBKEY,
-  Transaction
+  ComputeBudgetProgram
 } from "@solana/web3.js";
 import { Staking } from "../../target/types/staking";
 import { airdropUsers, assertFail, merkleCollection, merkleCollectionOcp, FEES_LAMPORTS, FEES_ACCOUNT, merkleCollectionPNFT, merkleCollectionMetaplex } from "../helpers";
@@ -223,6 +223,7 @@ export const testUnstakeMpl = (
             instructions: SYSVAR_INSTRUCTIONS_PUBKEY
           },
           signers: [owner],
+          instructions: [ComputeBudgetProgram.setComputeUnitLimit({ units: 1400000 })]
         }
       );
 
@@ -255,6 +256,7 @@ export const testUnstakeMpl = (
             instructions: SYSVAR_INSTRUCTIONS_PUBKEY
           },
           signers: [owner],
+          instructions: [ComputeBudgetProgram.setComputeUnitLimit({ units: 1400000 })]
         }
       );
 
@@ -368,6 +370,7 @@ export const testUnstakeMpl = (
             instructions: SYSVAR_INSTRUCTIONS_PUBKEY
           },
           signers: [owner],
+          instructions: [ComputeBudgetProgram.setComputeUnitLimit({ units: 1400000 })]
         }
       );
 
@@ -400,6 +403,7 @@ export const testUnstakeMpl = (
             instructions: SYSVAR_INSTRUCTIONS_PUBKEY
           },
           signers: [owner],
+          instructions: [ComputeBudgetProgram.setComputeUnitLimit({ units: 1400000 })]
         }
       );      
 
@@ -509,6 +513,7 @@ export const testUnstakeMpl = (
             instructions: SYSVAR_INSTRUCTIONS_PUBKEY
           },
           signers: [owner],
+          instructions: [ComputeBudgetProgram.setComputeUnitLimit({ units: 1400000 })]
         }
       );
 
@@ -535,6 +540,7 @@ export const testUnstakeMpl = (
             instructions: SYSVAR_INSTRUCTIONS_PUBKEY
           },
           signers: [owner],
+          instructions: [ComputeBudgetProgram.setComputeUnitLimit({ units: 1400000 })]
         }
       );
 
@@ -563,6 +569,7 @@ export const testUnstakeMpl = (
             instructions: SYSVAR_INSTRUCTIONS_PUBKEY
           },
           signers: [owner],
+          instructions: [ComputeBudgetProgram.setComputeUnitLimit({ units: 1400000 })]
         }
       );
     });
@@ -653,6 +660,7 @@ export const testUnstakeMpl = (
             instructions: SYSVAR_INSTRUCTIONS_PUBKEY
           },
           signers: [owner],
+          instructions: [ComputeBudgetProgram.setComputeUnitLimit({ units: 1400000 })]
         }
       );
 
@@ -679,6 +687,7 @@ export const testUnstakeMpl = (
             instructions: SYSVAR_INSTRUCTIONS_PUBKEY
           },
           signers: [owner],
+          instructions: [ComputeBudgetProgram.setComputeUnitLimit({ units: 1400000 })]
         }
       );
 
@@ -707,6 +716,7 @@ export const testUnstakeMpl = (
             instructions: SYSVAR_INSTRUCTIONS_PUBKEY
           },
           signers: [owner],
+          instructions: [ComputeBudgetProgram.setComputeUnitLimit({ units: 1400000 })]
         }
       );
     });
