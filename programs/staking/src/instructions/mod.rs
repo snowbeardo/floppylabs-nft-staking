@@ -10,6 +10,7 @@ pub mod stake_mpl;
 pub mod unstake_mpl;
 pub mod unstake_mpl_custodial;
 pub mod claim_staking;
+pub mod migrate_escrow;
 
 pub use init_staking::*;
 pub use set_staking::*;
@@ -23,3 +24,4 @@ pub use stake_mpl::*;
 pub use unstake_mpl::*;
 pub use unstake_mpl_custodial::*;
 pub use claim_staking::*;
+pub use migrate_escrow::*;

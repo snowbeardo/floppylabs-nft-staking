@@ -128,6 +128,11 @@ mod staking {
         instructions::claim_staking::handler(ctx)
     }
 
+    /// Migrate Escrow account
+    pub fn migrate_escrow(ctx: Context<MigrateEscrow>) -> Result<()> {
+        instructions::migrate_escrow::handler(ctx)
+    }
+
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]

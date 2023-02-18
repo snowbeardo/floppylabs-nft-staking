@@ -21,9 +21,9 @@ import { Staking, IDL as StakingIDL } from "../target/types/staking";
 import stakingIdl from "../target/idl/staking.json";
 
 /**
- * Migrates staking account to new size
+ * Migrates escrow account to new size and adds data
  */
-const migrateStaking = async (endpoint: string, stakingKey: string) => {
+const migrateEscrow = async (endpoint: string, stakingKey: string) => {
 
   const connection = new web3.Connection(endpoint);
   const wallet = new Wallet(web3.Keypair.fromSecretKey(Uint8Array.from(key)));
@@ -38,20 +38,18 @@ const migrateStaking = async (endpoint: string, stakingKey: string) => {
     provider
   );
 
-  const stakingKeyPublicKey = new PublicKey(stakingKey);
-
-  const [stakingAddress, stakingBump] = await PublicKey.findProgramAddress(
-    [Buffer.from("staking", "utf8"), stakingKeyPublicKey.toBuffer()],
+  const [escrow, escrowBump] = await PublicKey.findProgramAddress(
+    [Buffer.from("escrow", "utf8"), stakingKey.toBuffer()],
     stakingProgram.programId
   );
 
-  console.log("Staking key:", stakingKeyPublicKey.toString());
   console.log("Signing key:", wallet.payer.publicKey.toString());
+  console.log("Escrow key:", escrow.publicKey.toString());
 
-  await stakingProgram.rpc.migrateStaking(
+  await stakingProgram.rpc.migrateEscrow(
     {
       accounts: {
-        staking: stakingAddress,
+        escrow: escrow,
         auth: wallet.payer.publicKey,
         systemProgram: SystemProgram.programId,
       },
@@ -59,8 +57,8 @@ const migrateStaking = async (endpoint: string, stakingKey: string) => {
     }
   );
 
-  console.log("Staking migrated");
+  console.log("Escrow migrated");
 
 };
 
-migrateStaking(process.argv[2], process.argv[3]);
+migrateEscrow(process.argv[2], process.argv[3]);

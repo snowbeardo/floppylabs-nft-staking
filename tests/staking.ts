@@ -25,6 +25,7 @@ import { testStakeMpl } from "./suites/stakeMpl";
 import { testUnstakeMpl } from "./suites/unstakeMpl";
 import { testUnstakeMplCustodial } from "./suites/unstakeMplCustodial";
 import { testWithdrawRewards } from "./suites/withdrawRewards";
+import { testMigrateEscrow } from "./suites/migrateEscrow";
 
 describe("Staking Tests Suite", () => {
   const provider = Provider.local();
@@ -63,16 +64,17 @@ describe("Staking Tests Suite", () => {
      state.tree = nfts.tree;
   });
 
-  /*testInitializeStaking(state, provider);
+  testInitializeStaking(state, provider);
   testSetStaking(state, provider);
   testSetFeesExempt(state, provider);
   testWithdrawRewards(state, provider);
   testStakeNft(state, provider);
   testUnstakeNft(state, provider);
   testStakeOcp(state, provider);
-  testUnstakeOcp(state, provider);*/
+  testUnstakeOcp(state, provider);
   testStakeMpl(state, provider);
   testUnstakeMpl(state, provider);
   testUnstakeMplCustodial(state, provider);
-  //testClaimRewards(state, provider);
+  testClaimRewards(state, provider);
+  testMigrateEscrow(state, provider);
 });
