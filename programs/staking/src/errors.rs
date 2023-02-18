@@ -10,4 +10,7 @@ pub enum StakingError {
 
     #[msg("Transaction fee payment failed")]
     InvalidFee,
+
+    #[msg("Could not determine token standard")]
+    CouldNotDetermineTokenStandard,
 }

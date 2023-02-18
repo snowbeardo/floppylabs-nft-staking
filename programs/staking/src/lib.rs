@@ -102,10 +102,36 @@ mod staking {
         instructions::unstake_ocp::handler(ctx)
     }
 
+    /// Stake using Metaplex's Token Metadata program (support for pNFT)
+    pub fn stake_mpl(
+        ctx: Context<StakeMpl>,
+        bumps: StakedNftBumps,
+        proof: Vec<[u8; 32]>,
+        rarity_multiplier: u64,
+    ) -> Result<()> {
+        instructions::stake_mpl::handler(ctx, bumps, proof, rarity_multiplier)
+    }
+
+    /// Unstake using Metaplex's Token Metadata program (support for pNFT)
+    pub fn unstake_mpl(ctx: Context<UnstakeMpl>) -> Result<()> {
+        instructions::unstake_mpl::handler(ctx)
+    }
+
+    /*/// Unstake using Metaplex's Token Metadata program a token custodied by our escrow
+    /// Mainly used to support non pNFT staked collections migrating to pNFT
+    pub fn unstake_mpl_custodial(ctx: Context<UnstakeMplCustodial>) -> Result<()> {
+        instructions::unstake_mpl_custodial::handler(ctx)
+    }*/
+
     /// Claim staking rewards
     pub fn claim_staking(ctx: Context<ClaimStaking>) -> Result<()> {
         instructions::claim_staking::handler(ctx)
     }
+
+    /*/// Migrate Escrow account
+    pub fn migrate_escrow(ctx: Context<MigrateEscrow>) -> Result<()> {
+        instructions::migrate_escrow::handler(ctx)
+    }*/
 
 }
 

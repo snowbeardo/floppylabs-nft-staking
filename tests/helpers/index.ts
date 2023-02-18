@@ -1,15 +1,18 @@
 import { expect } from "chai";
-import { web3, Provider, BN } from "@project-serum/anchor";
+import * as anchor from "@project-serum/anchor";
 
 import {
   TOKEN_PROGRAM_ID,
   createMint,
   getOrCreateAssociatedTokenAccount,
+  getAssociatedTokenAddress,
   mintTo,
+  Account,
   ASSOCIATED_TOKEN_PROGRAM_ID,
+  createAssociatedTokenAccount,
 } from "@solana/spl-token";
 
-import { PublicKey } from "@solana/web3.js";
+import { PublicKey, Signer } from "@solana/web3.js";
 
 import { MerkleTree } from "./merkleTree";
 
@@ -18,19 +21,18 @@ import {
   DEVNET_POLICY_ALL
 } from "../helpers/ocpUtils";
 
+import { mintMetaplex, mintProgrammableNft } from "./metaplexUtils"
+
 export const FEES_LAMPORTS = 10_000_000;
 export const FEES_ACCOUNT: PublicKey = new PublicKey('WHduhbnLJnGNcjBhiGp58kSKMcph6G6Aaq1MiPXj7yd');
 
 export const findAssociatedAddress = async (
-  owner: web3.PublicKey,
-  mint: web3.PublicKey
+  owner: PublicKey,
+  mint: PublicKey
 ) => {
-  return await Token.getAssociatedTokenAddress(
-    ASSOCIATED_TOKEN_PROGRAM_ID,
-    TOKEN_PROGRAM_ID,
+  return await getAssociatedTokenAddress(
     mint,
-    owner,
-    true
+    owner
   );
 };
 
@@ -50,8 +52,8 @@ export const assertFail = async (pendingTx: Promise<any>, error?: string) => {
 };
 
 export const airdropUsers = async (
-  users: web3.Signer[],
-  provider: Provider,
+  users: Signer[],
+  provider: anchor.Provider,
   options?: { amount?: number }
 ) => {
   await Promise.all(
@@ -70,29 +72,39 @@ export const airdropUsers = async (
 };
 
 export const airdropNft: (
-  user: web3.Signer,
-  provider: Provider
-) => Promise<[Token, web3.PublicKey]> = async (user, provider) => {
-  let mint = await Token.createMint(
+  user: Signer,
+  provider: anchor.Provider
+) => Promise<[PublicKey, Account]> = async (user, provider) => {
+  let mint = await createMint(
     provider.connection,
     user,
     user.publicKey,
     null,
-    0,
-    TOKEN_PROGRAM_ID
+    0
   );
 
-  let account = await mint.createAccount(user.publicKey);
+  const ownerAccount = await getOrCreateAssociatedTokenAccount(
+    provider.connection,
+    user,
+    mint,
+    user.publicKey
+  );
+  await mintTo(
+      provider.connection,
+      user,
+      mint,
+      ownerAccount.address,
+      user,
+      1
+  );
 
-  await mint.mintTo(account, user, [], 1);
-
-  return [mint, account];
+  return [mint, ownerAccount];
 };
 
 export const merkleCollection = async (
-  user: web3.Signer,
+  user: Signer,
   amount: number,
-  provider: Provider
+  provider: anchor.Provider
 ) => {
   const mints = await Promise.all(
     Array(amount)
@@ -141,7 +153,7 @@ export const merkleCollection = async (
 export const merkleCollectionOcp = async (
   wallet: anchor.Wallet,
   amount: number,
-  provider: Provider
+  provider: anchor.Provider
 ) => {
   const [tokenMint, tokenAta] = await createTestMintAndWrap(
     provider.connection,
@@ -166,8 +178,48 @@ export const merkleCollectionOcp = async (
   };
 };
 
+//TODO move from here
+export const merkleCollectionMetaplex = async (
+  wallet: anchor.Wallet,
+  amount: number,
+  provider: anchor.Provider
+) => {
+  // Mint one pNFT and one NFT
+  const [pNFTMint, pNFTAta, pNFTRuleSetPda] = await mintMetaplex(
+    true,
+    provider.connection,
+    wallet
+  );
+  expect(pNFTMint.toBase58()).to.not.equal(null);
+  expect(pNFTAta.toBase58()).to.not.equal(null);
+
+  const [NFTMint, NFTAta, tokenMetadataProgram] = await mintMetaplex(
+    false,
+    provider.connection,
+    wallet
+  );
+  expect(NFTMint.toBase58()).to.not.equal(null);
+  expect(NFTAta.toBase58()).to.not.equal(null);
+
+  const mints = [pNFTMint, NFTMint];
+  const ruleSetPdas = [pNFTRuleSetPda, tokenMetadataProgram];
+
+  const leaves = buildLeaves(
+    mints.map((e, i) => ({
+      mint: e,
+      rarityMultiplier: i,
+    }))
+  );
+  const tree = new MerkleTree(leaves);
+  return {
+    mints,
+    ruleSetPdas,
+    tree    
+  };
+};
+
 export const buildLeaves = (
-  data: { mint: web3.PublicKey; rarityMultiplier: number; }[]
+  data: { mint: PublicKey; rarityMultiplier: number; }[]
 ) => {
   const leaves: Array<Buffer> = [];
   for (let idx = 0; idx < data.length; ++idx) {
@@ -175,7 +227,7 @@ export const buildLeaves = (
     leaves.push(
       Buffer.from([
         ...item.mint.toBuffer(),
-        ...new BN(item.rarityMultiplier).toArray("le", 8),
+        ...new anchor.BN(item.rarityMultiplier).toArray("le", 8),
       ])
     );
   }
@@ -184,10 +236,10 @@ export const buildLeaves = (
 };
 
 export const mintAndTransferRewards = async (
-  provider: Provider,
-  programId: web3.PublicKey,
-  stakingKey: web3.PublicKey,
-  owner: web3.Signer,
+  provider: anchor.Provider,
+  programId: PublicKey,
+  stakingKey: PublicKey,
+  owner: Signer,
   amount: number
 ) => {
   let mint = await createMint(
@@ -197,11 +249,11 @@ export const mintAndTransferRewards = async (
     null,
     9
   );
-  const [escrow, escrowBump] = await web3.PublicKey.findProgramAddress(
+  const [escrow, escrowBump] = await PublicKey.findProgramAddress(
     [Buffer.from("escrow"), stakingKey.toBuffer()],
     programId
   );
-  const [rewardsAccount, rewardsBump] = await web3.PublicKey.findProgramAddress(
+  const [rewardsAccount, rewardsBump] = await PublicKey.findProgramAddress(
     [Buffer.from("rewards"), stakingKey.toBuffer(), mint.toBuffer()],
     programId
   );

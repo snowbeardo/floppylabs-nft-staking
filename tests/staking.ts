@@ -21,7 +21,11 @@ import { testStakeNft } from "./suites/stakeNft";
 import { testUnstakeNft } from "./suites/unstakeNft";
 import { testStakeOcp } from "./suites/stakeOcp";
 import { testUnstakeOcp } from "./suites/unstakeOcp";
+import { testStakeMpl } from "./suites/stakeMpl";
+import { testUnstakeMpl } from "./suites/unstakeMpl";
+import { testUnstakeMplCustodial } from "./suites/unstakeMplCustodial";
 import { testWithdrawRewards } from "./suites/withdrawRewards";
+import { testMigrateEscrow } from "./suites/migrateEscrow";
 
 describe("Staking Tests Suite", () => {
   const provider = Provider.local();
@@ -68,5 +72,9 @@ describe("Staking Tests Suite", () => {
   testUnstakeNft(state, provider);
   testStakeOcp(state, provider);
   testUnstakeOcp(state, provider);
+  testStakeMpl(state, provider);
+  testUnstakeMpl(state, provider);
+  //testUnstakeMplCustodial(state, provider);
   testClaimRewards(state, provider);
+  //testMigrateEscrow(state, provider);
 });
