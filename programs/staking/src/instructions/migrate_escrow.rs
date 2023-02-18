@@ -1,5 +1,4 @@
 use anchor_lang::prelude::*;
-use crate::fl_auth_wallet;
 
 /// The global state of the program
 #[account]
@@ -28,7 +27,6 @@ pub struct MigrateEscrow<'info> {
     pub escrow: Account<'info, Escrow>,
 
     /// FloppyLabs auth wallet, authorized to migrate project accounts
-    //#[account(mut, address = fl_auth_wallet::ID)]
     #[account(mut)]
     pub auth: Signer<'info>,
 
