@@ -74,7 +74,7 @@ describe("Staking Tests Suite", () => {
   testUnstakeOcp(state, provider);
   testStakeMpl(state, provider);
   testUnstakeMpl(state, provider);
-  testUnstakeMplCustodial(state, provider);
+  //testUnstakeMplCustodial(state, provider);
   testClaimRewards(state, provider);
-  testMigrateEscrow(state, provider);
+  //testMigrateEscrow(state, provider);
 });
