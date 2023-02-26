@@ -14,7 +14,6 @@ declare_id!("BtDDM9Nve5JXUVvDg8wmLDVwzgGB8pJ6oum4fGRKM8Av");
 
 #[program]
 mod staking {
-    use crate::instructions::unstake_nft::UnstakeNft;
     use super::*;
 
     /// Initializes the staking
@@ -72,7 +71,7 @@ mod staking {
         )
     }
 
-    /// Stake an NFT
+    /*/// Stake an NFT
     pub fn stake_nft(
         ctx: Context<StakeNft>,
         bumps: StakedNftBumps,
@@ -80,12 +79,12 @@ mod staking {
         rarity_multiplier: u64,
     ) -> Result<()> {
         instructions::stake_nft::handler(ctx, bumps, proof, rarity_multiplier)
-    }
+    }*/
 
-    /// Unstake a staked nft
+    /*/// Unstake a staked nft
     pub fn unstake_nft(ctx: Context<UnstakeNft>) -> Result<()> {
         instructions::unstake_nft::handler(ctx)
-    }
+    }*/
 
     /// Stake an OCP NFT (ME royalties enforcement standard)
     pub fn stake_ocp(
@@ -117,11 +116,11 @@ mod staking {
         instructions::unstake_mpl::handler(ctx)
     }
 
-    /*/// Unstake using Metaplex's Token Metadata program a token custodied by our escrow
+    /// Unstake using Metaplex's Token Metadata program a token custodied by our escrow
     /// Mainly used to support non pNFT staked collections migrating to pNFT
     pub fn unstake_mpl_custodial(ctx: Context<UnstakeMplCustodial>) -> Result<()> {
         instructions::unstake_mpl_custodial::handler(ctx)
-    }*/
+    }
 
     /// Claim staking rewards
     pub fn claim_staking(ctx: Context<ClaimStaking>) -> Result<()> {

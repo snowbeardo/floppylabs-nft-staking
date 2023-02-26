@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::sysvar;
 use anchor_lang::system_program;
-use anchor_spl::token::{self, Token, TokenAccount};
+use anchor_spl::token::{self, Token, TokenAccount, Transfer};
 
 use mpl_token_metadata::{
     state::{TokenStandard, Metadata, TokenMetadataAccount},
@@ -10,7 +10,6 @@ use mpl_token_metadata::{
 use solana_program::program::{invoke, invoke_signed};
 
 use crate::{Staking, StakedNft};
-use crate::errors::StakingError;
 use crate::fees_wallet;
 
 #[derive(Accounts)]
@@ -37,6 +36,18 @@ pub struct UnstakeMpl<'info> {
     /// CHECK: TBD
     pub escrow: AccountInfo<'info>,
 
+    /// The account that will hold the rewards token
+    #[account(
+        mut,
+        seeds = [
+            b"rewards",
+            staking.key.as_ref(),
+            staking.mint.as_ref()
+        ],
+        bump = staking.bumps.rewards,
+    )]
+    pub rewards_account: Box<Account<'info, TokenAccount>>,
+
     /// The account representing the staked NFT
     #[account(
         mut,
@@ -62,6 +73,20 @@ pub struct UnstakeMpl<'info> {
         constraint = staker_account.owner == staker.key()
     )]
     pub staker_account: Box<Account<'info, TokenAccount>>,
+
+    /// The mint of the reward token
+    #[account(mut)]
+    /// CHECK: TBD
+    pub rewards_mint: AccountInfo<'info>,
+
+    /// The user account receiving rewards
+    #[account(
+        mut,
+        constraint =
+            staker_rewards_account.owner == staker.key() &&
+            staker_rewards_account.mint == rewards_mint.key()
+    )]
+    pub staker_rewards_account: Box<Account<'info, TokenAccount>>,
 
     /// The fee receiving account
     #[account(mut, address = fees_wallet::ID)]
@@ -93,7 +118,10 @@ pub struct UnstakeMpl<'info> {
     pub authorization_rules_program: UncheckedAccount<'info>,
 
     /// CHECK: checked in cpi
-    pub authorization_rules: UncheckedAccount<'info>,    
+    pub authorization_rules: UncheckedAccount<'info>,
+
+    /// Clock account used to know the time
+    pub clock: Sysvar<'info, Clock>,
 
     /// CHECK: This is not dangerous because the ID is checked with instructions sysvar
     #[account(address = sysvar::instructions::id())]
@@ -103,6 +131,7 @@ pub struct UnstakeMpl<'info> {
 /// Unstake the staked_nft
 pub fn handler(ctx: Context<UnstakeMpl>) -> Result<()> {
     let staking = &mut ctx.accounts.staking;
+    let staked_nft = &mut ctx.accounts.staked_nft;
 
     // Charge fees if the project is not fees exempt
     if !staking.fees_exempt {
@@ -182,8 +211,7 @@ pub fn handler(ctx: Context<UnstakeMpl>) -> Result<()> {
 
     let revoke_args = match metadata.token_standard {
         Some(TokenStandard::ProgrammableNonFungible) => RevokeArgs::StakingV1,
-        Some(_) => RevokeArgs::StandardV1,
-        None => { return err!(StakingError::CouldNotDetermineTokenStandard) }
+        _ => RevokeArgs::StandardV1
     };
 
     let revoke = revoke_builder.build(revoke_args).unwrap();
@@ -205,6 +233,37 @@ pub fn handler(ctx: Context<UnstakeMpl>) -> Result<()> {
                ctx.accounts.authorization_rules_program.to_account_info(),
                ctx.accounts.authorization_rules.to_account_info()
            ])?;
+
+    // Claim rewards
+    let rarity_multiplier = staked_nft.rarity_multiplier;
+    let seconds_elapsed = ctx.accounts.clock.unix_timestamp - staked_nft.last_claim;
+    let daily_rewards_adjusted = staking.daily_rewards * rarity_multiplier / 100;
+    let rewards_amount = daily_rewards_adjusted * (seconds_elapsed as u64) / 86400;
+
+    staked_nft.last_claim = ctx.accounts.clock.unix_timestamp;
+
+    let seeds_claim = &[
+        b"escrow".as_ref(),
+        staking.key.as_ref(),
+        &[staking.bumps.escrow],
+    ];
+    let signer_claim = &[&seeds_claim[..]];
+
+    let context = CpiContext::new_with_signer(
+        ctx.accounts.token_program.to_account_info(),
+        Transfer {
+            from: ctx.accounts.rewards_account.to_account_info(),
+            to: ctx.accounts.staker_rewards_account.to_account_info(),
+            authority: ctx.accounts.escrow.to_account_info(),
+        },
+        signer_claim,
+    );
+
+    if ctx.accounts.rewards_account.amount < rewards_amount {
+        msg!("Rewards not claimed, not enough funds");
+    } else {
+        token::transfer(context, rewards_amount)?;
+    }
 
     msg!("Unstaked token");
 

@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::sysvar;
-use anchor_spl::token::{self, CloseAccount, Token, TokenAccount};
+use anchor_spl::token::{self, CloseAccount, Token, TokenAccount, Transfer};
 use anchor_lang::system_program;
 
 use mpl_token_metadata::{
@@ -35,6 +35,18 @@ pub struct UnstakeMplCustodial<'info> {
     /// CHECK: TBD
     pub escrow: AccountInfo<'info>,
 
+    /// The account that will hold the rewards token
+    #[account(
+        mut,
+        seeds = [
+            b"rewards",
+            staking.key.as_ref(),
+            staking.mint.as_ref()
+        ],
+        bump = staking.bumps.rewards,
+    )]
+    pub rewards_account: Box<Account<'info, TokenAccount>>,
+
     /// The account representing the staked NFT
     #[account(
         mut,
@@ -60,6 +72,20 @@ pub struct UnstakeMplCustodial<'info> {
         constraint = staker_account.owner == staker.key()
     )]
     pub staker_account: Box<Account<'info, TokenAccount>>,
+
+    /// The mint of the reward token
+    #[account(mut)]
+    /// CHECK: TBD
+    pub rewards_mint: AccountInfo<'info>,
+
+    /// The user account receiving rewards
+    #[account(
+        mut,
+        constraint =
+            staker_rewards_account.owner == staker.key() &&
+            staker_rewards_account.mint == rewards_mint.key()
+    )]
+    pub staker_rewards_account: Box<Account<'info, TokenAccount>>,
 
     /// The account that holds the staked NFT
     #[account(
@@ -108,6 +134,9 @@ pub struct UnstakeMplCustodial<'info> {
     /// CHECK: checked in cpi
     pub ata_program: UncheckedAccount<'info>,
 
+    /// Clock account used to know the time
+    pub clock: Sysvar<'info, Clock>,
+
     /// CHECK: This is not dangerous because the ID is checked with instructions sysvar
     #[account(address = sysvar::instructions::id())]
     pub instructions: UncheckedAccount<'info>,
@@ -116,6 +145,7 @@ pub struct UnstakeMplCustodial<'info> {
 /// Unstake the staked_nft
 pub fn handler(ctx: Context<UnstakeMplCustodial>) -> Result<()> {
     let staking = &mut ctx.accounts.staking;
+    let staked_nft = &mut ctx.accounts.staked_nft;
 
     // Charge fees if the project is not fees exempt
     if !staking.fees_exempt {
@@ -192,6 +222,30 @@ pub fn handler(ctx: Context<UnstakeMplCustodial>) -> Result<()> {
         signer,
     );
     token::close_account(close_account_ctx)?;
+
+    // Claim rewards
+    let rarity_multiplier = staked_nft.rarity_multiplier;
+    let seconds_elapsed = ctx.accounts.clock.unix_timestamp - staked_nft.last_claim;
+    let daily_rewards_adjusted = staking.daily_rewards * rarity_multiplier / 100;
+    let rewards_amount = daily_rewards_adjusted * (seconds_elapsed as u64) / 86400;
+
+    staked_nft.last_claim = ctx.accounts.clock.unix_timestamp;
+
+    let context = CpiContext::new_with_signer(
+        ctx.accounts.token_program.to_account_info(),
+        Transfer {
+            from: ctx.accounts.rewards_account.to_account_info(),
+            to: ctx.accounts.staker_rewards_account.to_account_info(),
+            authority: ctx.accounts.escrow.to_account_info(),
+        },
+        signer,
+    );
+
+    if ctx.accounts.rewards_account.amount < rewards_amount {
+        msg!("Rewards not claimed, not enough funds");
+    } else {
+        token::transfer(context, rewards_amount)?;
+    }
 
     msg!("Unstaked token");
 

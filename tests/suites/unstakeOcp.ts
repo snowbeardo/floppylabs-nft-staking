@@ -17,13 +17,13 @@ import {
 } from "@solana/web3.js";
 import { Staking } from "../../target/types/staking";
 import { airdropUsers, assertFail, merkleCollectionOcp, FEES_LAMPORTS, FEES_ACCOUNT } from "../helpers";
-import { createMint, getOrCreateAssociatedTokenAccount, mintTo, transfer, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { getAccount, createMint, getOrCreateAssociatedTokenAccount, mintTo, transfer, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { MerkleTree } from "../helpers/merkleTree";
 import {
   createTestMintAndWrap,
   DEVNET_POLICY_ALL
 } from "../helpers/ocpUtils";
-import { findMintStatePk, CMT_PROGRAM, OCP_PROGRAM } from "@magiceden-oss/open_creator_protocol";
+import { findMintStatePk, CMT_PROGRAM } from "@magiceden-oss/open_creator_protocol";
 import { findMetadataPda } from "@metaplex-foundation/js";
 
 const OCP_PROGRAM = new PublicKey("ocp4vWUzA2z2XMYJ3QhM9vWdyoyoQwAFJhRdVTbvo9E"); // OCP Devnet
@@ -214,14 +214,38 @@ export const testUnstakeOcp = (
 
       const feesBalanceBefore = await provider.connection.getBalance(FEES_ACCOUNT);
 
+      const stakingBefore = await program.account.staking.fetch(stakingAddress);
+
+      const [rewardsAccount] = await PublicKey.findProgramAddress(
+        [
+          Buffer.from("rewards", "utf8"),
+          stakingBefore.key.toBuffer(),
+          stakingBefore.mint.toBuffer(),
+        ],
+        program.programId
+      );
+
+      const rewardsBefore = (await getAccount(provider.connection, rewardsAccount))
+        .amount;
+
+      const stakerRewardsAccount = await getOrCreateAssociatedTokenAccount(
+        provider.connection,
+        owner,
+        mintRewards,
+        owner.publicKey
+      );
+
       await program.rpc.unstakeOcp(
         {
           accounts: {
             staking: stakingAddress,
             escrow: escrow,
+            rewardsAccount: rewardsAccount,
             stakedNft: stakedNft,
             staker: owner.publicKey,
             mint: mints[indexStaked],
+            rewardsMint: mintRewards,
+            stakerRewardsAccount: stakerRewardsAccount.address,
             feeReceiverAccount: FEES_ACCOUNT,
             systemProgram: SystemProgram.programId,
             ocpPolicy: DEVNET_POLICY_ALL,
@@ -229,12 +253,33 @@ export const testUnstakeOcp = (
             ocpMintState: findMintStatePk(mints[indexStaked]),
             ocpProgram: OCP_PROGRAM,
             cmtProgram: CMT_PROGRAM,
+            clock: SYSVAR_CLOCK_PUBKEY,
+            tokenProgram: TOKEN_PROGRAM_ID,
             instructions: SYSVAR_INSTRUCTIONS_PUBKEY
           },
           signers: [owner],
         }
       );
 
+      // Verify claim worked
+      const stakerAccountAfter =
+        await getOrCreateAssociatedTokenAccount(
+        provider.connection,
+        owner,
+        mintRewards,
+        owner.publicKey
+      );
+
+      const rewardsAfter = (await getAccount(provider.connection, rewardsAccount))
+        .amount;
+      const rewardsGiven = Number(rewardsBefore) - Number(rewardsAfter);
+
+      // The rewards have been transferred to the staker
+      expect(Number(stakerAccountAfter.amount)).to.equal(
+        Number(stakerRewardsAccount.amount) + Number(rewardsGiven)
+      );            
+
+      // Fees
       const feesBalanceAfter = await provider.connection.getBalance(FEES_ACCOUNT);
       expect(feesBalanceAfter - feesBalanceBefore).to.equal(FEES_LAMPORTS);
 
