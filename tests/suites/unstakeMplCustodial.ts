@@ -18,8 +18,8 @@ import {
   ComputeBudgetProgram
 } from "@solana/web3.js";
 import { Staking } from "../../target/types/staking";
-import { airdropUsers, assertFail, merkleCollection, merkleCollectionOcp, FEES_LAMPORTS, FEES_ACCOUNT, merkleCollectionPNFT, merkleCollectionMetaplex } from "../helpers";
-import { createMint, getOrCreateAssociatedTokenAccount, mintTo, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { airdropUsers, FEES_LAMPORTS, FEES_ACCOUNT, merkleCollectionMetaplex } from "../helpers";
+import { getAccount, createMint, getOrCreateAssociatedTokenAccount, mintTo, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { MerkleTree } from "../helpers/merkleTree";
 import {
   createTestMintAndWrap,
@@ -236,15 +236,38 @@ export const testUnstakeMplCustodial = (
       ).nftsStaked;
 
       // Unstake
+      const stakingBefore = await program.account.staking.fetch(stakingAddress);
+
+      const [rewardsAccount] = await PublicKey.findProgramAddress(
+        [
+          Buffer.from("rewards", "utf8"),
+          stakingBefore.key.toBuffer(),
+          stakingBefore.mint.toBuffer(),
+        ],
+        program.programId
+      );
+
+      const rewardsBefore = (await getAccount(provider.connection, rewardsAccount))
+        .amount;
+
+      const stakerRewardsAccount = await getOrCreateAssociatedTokenAccount(
+        provider.connection,
+        owner,
+        mintRewards,
+        owner.publicKey
+      );
 
       await program.rpc.unstakeMplCustodial(        
         {
           accounts: {
             staking: stakingAddress,
             escrow: escrow,
+            rewardsAccount: rewardsAccount,
             stakedNft: stakedNft,
             staker: owner.publicKey,
             mint: mints[NFTIndex],
+            rewardsMint: mintRewards,
+            stakerRewardsAccount: stakerRewardsAccount.address,
             stakerAccount: ownerAccount,
             depositAccount: deposit,
             feeReceiverAccount: FEES_ACCOUNT,
@@ -257,6 +280,7 @@ export const testUnstakeMplCustodial = (
             authorizationRulesProgram: TOKEN_AUTH_RULES_ID,
             authorizationRules: ruleSetPdas[NFTIndex],
             ataProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+            clock: SYSVAR_CLOCK_PUBKEY,
             instructions: SYSVAR_INSTRUCTIONS_PUBKEY
           },
           signers: [owner],
@@ -264,6 +288,25 @@ export const testUnstakeMplCustodial = (
         }
       );
 
+      // Verify claim worked
+      const stakerAccountAfter =
+        await getOrCreateAssociatedTokenAccount(
+        provider.connection,
+        owner,
+        mintRewards,
+        owner.publicKey
+      );
+
+      const rewardsAfter = (await getAccount(provider.connection, rewardsAccount))
+        .amount;
+      const rewardsGiven = Number(rewardsBefore) - Number(rewardsAfter);
+
+      // The rewards have been transferred to the staker
+      expect(Number(stakerAccountAfter.amount)).to.equal(
+        Number(stakerRewardsAccount.amount) + Number(rewardsGiven)
+      );            
+
+      // Fees
       const feesBalanceAfter = await provider.connection.getBalance(FEES_ACCOUNT);
       expect(feesBalanceAfter - feesBalanceBefore).to.equal(FEES_LAMPORTS);
 

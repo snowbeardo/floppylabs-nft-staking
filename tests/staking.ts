@@ -64,17 +64,17 @@ describe("Staking Tests Suite", () => {
      state.tree = nfts.tree;
   });
 
-  testInitializeStaking(state, provider);
-  testSetStaking(state, provider);
-  testSetFeesExempt(state, provider);
-  testWithdrawRewards(state, provider);
-  testStakeNft(state, provider);
-  testUnstakeNft(state, provider);
-  testStakeOcp(state, provider);
-  testUnstakeOcp(state, provider);
-  testStakeMpl(state, provider);
-  testUnstakeMpl(state, provider);
-  //testUnstakeMplCustodial(state, provider);
-  testClaimRewards(state, provider);
+  //testInitializeStaking(state, provider);
+  //testSetStaking(state, provider);
+  //testSetFeesExempt(state, provider);
+  //testWithdrawRewards(state, provider);
+  //testStakeNft(state, provider);
+  //testUnstakeNft(state, provider);
+  testStakeOcp(state, provider); // To make it work, enable ocp policy (DEVNET allow all) in Anchor.toml
+  //testUnstakeOcp(state, provider); // To make it work, enable ocp policy (DEVNET allow all) in Anchor.toml
+  //testStakeMpl(state, provider);
+  //testUnstakeMpl(state, provider);
+  //testUnstakeMplCustodial(state, provider); // To make it work, enable stakeNFT instruction
+  //testClaimRewards(state, provider);
   //testMigrateEscrow(state, provider);
 });

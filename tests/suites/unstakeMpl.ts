@@ -18,7 +18,7 @@ import {
 } from "@solana/web3.js";
 import { Staking } from "../../target/types/staking";
 import { airdropUsers, assertFail, merkleCollection, merkleCollectionOcp, FEES_LAMPORTS, FEES_ACCOUNT, merkleCollectionPNFT, merkleCollectionMetaplex } from "../helpers";
-import { createMint, getOrCreateAssociatedTokenAccount, mintTo, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { getAccount, createMint, getOrCreateAssociatedTokenAccount, mintTo, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { MerkleTree } from "../helpers/merkleTree";
 import {
   createTestMintAndWrap,
@@ -48,6 +48,8 @@ export const testUnstakeMpl = (
     setProvider(provider);
 
     const program = workspace.Staking as Program<Staking>;
+
+    const dailyRewards = new BN(604800000000);
 
     const n = 10;
     let mintRewards: Token,
@@ -106,7 +108,7 @@ export const testUnstakeMpl = (
 
       await program.rpc.initializeStaking(
         bumps,
-        state.dailyRewards,
+        dailyRewards,
         state.start,
         tree.getRootArray(),
         {
@@ -132,7 +134,7 @@ export const testUnstakeMpl = (
           mintRewards,
           rewards,
           owner,
-          startingAmount.toNumber()
+          10 ** 14
       );
 
     });
@@ -227,23 +229,50 @@ export const testUnstakeMpl = (
         }
       );
 
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       // Unstake
 
       const nftsStakedBefore = (
         await program.account.staking.fetch(stakingAddress)
       ).nftsStaked;
 
-      const feesBalanceBefore = await provider.connection.getBalance(FEES_ACCOUNT);      
+      const feesBalanceBefore = await provider.connection.getBalance(FEES_ACCOUNT);
+
+      const stakingBefore = await program.account.staking.fetch(stakingAddress);
+
+      const [rewardsAccount] = await PublicKey.findProgramAddress(
+        [
+          Buffer.from("rewards", "utf8"),
+          stakingBefore.key.toBuffer(),
+          stakingBefore.mint.toBuffer(),
+        ],
+        program.programId
+      );
+
+      const rewardsBefore = (await getAccount(provider.connection, rewardsAccount))
+        .amount;
+
+      const stakerRewardsAccount = await getOrCreateAssociatedTokenAccount(
+        provider.connection,
+        owner,
+        mintRewards,
+        owner.publicKey
+      );
+
 
       await program.rpc.unstakeMpl(        
         {
           accounts: {
             staking: stakingAddress,
             escrow: escrow,
+            rewardsAccount: rewardsAccount,
             stakedNft: stakedNft,
             staker: owner.publicKey,
             mint: mints[pNFTIndex],
             stakerAccount: ownerAccount,
+            rewardsMint: mintRewards,
+            stakerRewardsAccount: stakerRewardsAccount.address,
             feeReceiverAccount: FEES_ACCOUNT,
             systemProgram: SystemProgram.programId,
             masterEdition: masterEddition,
@@ -253,12 +282,31 @@ export const testUnstakeMpl = (
             tokenProgram: TOKEN_PROGRAM_ID,
             authorizationRulesProgram: TOKEN_AUTH_RULES_ID,
             authorizationRules: ruleSetPdas[pNFTIndex],
+            clock: SYSVAR_CLOCK_PUBKEY,
             instructions: SYSVAR_INSTRUCTIONS_PUBKEY
           },
           signers: [owner],
           instructions: [ComputeBudgetProgram.setComputeUnitLimit({ units: 1400000 })]
         }
       );
+
+      // Verify claim worked
+      const stakerAccountAfter =
+        await getOrCreateAssociatedTokenAccount(
+        provider.connection,
+        owner,
+        mintRewards,
+        owner.publicKey
+      );
+
+      const rewardsAfter = (await getAccount(provider.connection, rewardsAccount))
+        .amount;
+      const rewardsGiven = Number(rewardsBefore) - Number(rewardsAfter);
+
+      // The rewards have been transferred to the staker
+      expect(Number(stakerAccountAfter.amount)).to.equal(
+        Number(stakerRewardsAccount.amount) + Number(rewardsGiven)
+      );            
 
       // Verify unlock worked
       const tokenRecord = await TokenRecord.fromAccountAddress(provider.connection, tokenRecordAccount);
@@ -374,6 +422,8 @@ export const testUnstakeMpl = (
         }
       );
 
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       // Unstake
 
       const nftsStakedBefore = (
@@ -382,15 +432,44 @@ export const testUnstakeMpl = (
 
       const feesBalanceBefore = await provider.connection.getBalance(FEES_ACCOUNT);      
 
+      const stakingBefore = await program.account.staking.fetch(stakingAddress);
+
+      const [rewardsAccount] = await PublicKey.findProgramAddress(
+        [
+          Buffer.from("rewards", "utf8"),
+          stakingBefore.key.toBuffer(),
+          stakingBefore.mint.toBuffer(),
+        ],
+        program.programId
+      );
+
+      const stakerRewardsAccount = await getOrCreateAssociatedTokenAccount(
+        provider.connection,
+        owner,
+        mintRewards,
+        owner.publicKey
+      );
+
+      const rewardsBefore = (await getAccount(provider.connection, rewardsAccount))
+        .amount;
+
+      // The amount given is correct
+      const elapsed = 1000;
+      // Rarity is initialized, in the test, to the index for simplicity
+      const rarityMultiplier = new BN(NFTIndex);
+
       await program.rpc.unstakeMpl(        
         {
           accounts: {
             staking: stakingAddress,
             escrow: escrow,
+            rewardsAccount: rewardsAccount,
             stakedNft: stakedNft,
             staker: owner.publicKey,
             mint: mints[NFTIndex],
             stakerAccount: ownerAccount,
+            rewardsMint: mintRewards,
+            stakerRewardsAccount: stakerRewardsAccount.address,
             feeReceiverAccount: FEES_ACCOUNT,
             systemProgram: SystemProgram.programId,
             masterEdition: masterEddition,
@@ -400,12 +479,26 @@ export const testUnstakeMpl = (
             tokenProgram: TOKEN_PROGRAM_ID,
             authorizationRulesProgram: TOKEN_AUTH_RULES_ID,
             authorizationRules: ruleSetPdas[NFTIndex],
+            clock: SYSVAR_CLOCK_PUBKEY,
             instructions: SYSVAR_INSTRUCTIONS_PUBKEY
           },
           signers: [owner],
           instructions: [ComputeBudgetProgram.setComputeUnitLimit({ units: 1400000 })]
         }
-      );      
+      );
+
+      // Verify claim worked
+      const stakerAccountAfter =
+        await getOrCreateAssociatedTokenAccount(
+        provider.connection,
+        owner,
+        mintRewards,
+        owner.publicKey
+      );
+
+      const rewardsAfter = (await getAccount(provider.connection, rewardsAccount))
+        .amount;
+      const rewardsGiven = Number(rewardsBefore) - Number(rewardsAfter);
 
       const feesBalanceAfter = await provider.connection.getBalance(FEES_ACCOUNT);
       expect(feesBalanceAfter - feesBalanceBefore).to.equal(FEES_LAMPORTS);
@@ -517,17 +610,40 @@ export const testUnstakeMpl = (
         }
       );
 
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       // Unstake  
+
+      const stakingBefore = await program.account.staking.fetch(stakingAddress);
+
+      const [rewardsAccount] = await PublicKey.findProgramAddress(
+        [
+          Buffer.from("rewards", "utf8"),
+          stakingBefore.key.toBuffer(),
+          stakingBefore.mint.toBuffer(),
+        ],
+        program.programId
+      );
+
+      const stakerRewardsAccount = await getOrCreateAssociatedTokenAccount(
+        provider.connection,
+        owner,
+        mintRewards,
+        owner.publicKey
+      );
 
       await program.rpc.unstakeMpl(        
         {
           accounts: {
             staking: stakingAddress,
             escrow: escrow,
+            rewardsAccount: rewardsAccount,
             stakedNft: stakedNft,
             staker: owner.publicKey,
             mint: mints[pNFTIndex],
             stakerAccount: ownerAccount,
+            rewardsMint: mintRewards,
+            stakerRewardsAccount: stakerRewardsAccount.address,
             feeReceiverAccount: FEES_ACCOUNT,
             systemProgram: SystemProgram.programId,
             masterEdition: masterEddition,
@@ -537,6 +653,7 @@ export const testUnstakeMpl = (
             tokenProgram: TOKEN_PROGRAM_ID,
             authorizationRulesProgram: TOKEN_AUTH_RULES_ID,
             authorizationRules: ruleSetPdas[pNFTIndex],
+            clock: SYSVAR_CLOCK_PUBKEY,
             instructions: SYSVAR_INSTRUCTIONS_PUBKEY
           },
           signers: [owner],
@@ -664,17 +781,40 @@ export const testUnstakeMpl = (
         }
       );
 
-      // Unstake  
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Unstake
+
+      const stakingBefore = await program.account.staking.fetch(stakingAddress);
+
+      const [rewardsAccount] = await PublicKey.findProgramAddress(
+        [
+          Buffer.from("rewards", "utf8"),
+          stakingBefore.key.toBuffer(),
+          stakingBefore.mint.toBuffer(),
+        ],
+        program.programId
+      );
+
+      const stakerRewardsAccount = await getOrCreateAssociatedTokenAccount(
+        provider.connection,
+        owner,
+        mintRewards,
+        owner.publicKey
+      );
 
       await program.rpc.unstakeMpl(        
         {
           accounts: {
             staking: stakingAddress,
             escrow: escrow,
+            rewardsAccount: rewardsAccount,
             stakedNft: stakedNft,
             staker: owner.publicKey,
             mint: mints[NFTIndex],
             stakerAccount: ownerAccount,
+            rewardsMint: mintRewards,
+            stakerRewardsAccount: stakerRewardsAccount.address,
             feeReceiverAccount: FEES_ACCOUNT,
             systemProgram: SystemProgram.programId,
             masterEdition: masterEddition,
@@ -684,6 +824,7 @@ export const testUnstakeMpl = (
             tokenProgram: TOKEN_PROGRAM_ID,
             authorizationRulesProgram: TOKEN_AUTH_RULES_ID,
             authorizationRules: ruleSetPdas[NFTIndex],
+            clock: SYSVAR_CLOCK_PUBKEY,
             instructions: SYSVAR_INSTRUCTIONS_PUBKEY
           },
           signers: [owner],

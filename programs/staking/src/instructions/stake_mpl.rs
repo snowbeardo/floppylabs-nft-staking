@@ -180,10 +180,9 @@ pub fn handler(
             amount: 1,
             authorization_data: None,
         },
-        Some(_) => DelegateArgs::StandardV1 {
+        _ => DelegateArgs::StandardV1 {
             amount: 1,
-        },
-        None => { return err!(StakingError::CouldNotDetermineTokenStandard) }
+        }
     };
 
     let delegate = delegate_builder.build(delegate_args).unwrap();
