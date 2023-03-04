@@ -71,7 +71,7 @@ mod staking {
         )
     }
 
-    /*/// Stake an NFT
+    /// Stake an NFT
     pub fn stake_nft(
         ctx: Context<StakeNft>,
         bumps: StakedNftBumps,
@@ -79,7 +79,7 @@ mod staking {
         rarity_multiplier: u64,
     ) -> Result<()> {
         instructions::stake_nft::handler(ctx, bumps, proof, rarity_multiplier)
-    }*/
+    }
 
     /*/// Unstake a staked nft
     pub fn unstake_nft(ctx: Context<UnstakeNft>) -> Result<()> {
@@ -127,10 +127,10 @@ mod staking {
         instructions::claim_staking::handler(ctx)
     }
 
-    /*/// Migrate Escrow account
+    /// Migrate Escrow account
     pub fn migrate_escrow(ctx: Context<MigrateEscrow>) -> Result<()> {
         instructions::migrate_escrow::handler(ctx)
-    }*/
+    }
 
 }
 
