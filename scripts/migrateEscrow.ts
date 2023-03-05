@@ -7,8 +7,6 @@ import {
   Wallet,
   Idl,
 } from "@project-serum/anchor";
-import { BN } from "@project-serum/anchor";
-import { Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import {
   Keypair,
   PublicKey,
@@ -38,17 +36,20 @@ const migrateEscrow = async (endpoint: string, stakingKey: string) => {
     provider
   );
 
+  const stakingKeyPublicKey = new PublicKey(stakingKey);
+
   const [escrow, escrowBump] = await PublicKey.findProgramAddress(
-    [Buffer.from("escrow", "utf8"), stakingKey.toBuffer()],
+    [Buffer.from("escrow", "utf8"), stakingKeyPublicKey.toBuffer()],
     stakingProgram.programId
   );
 
   console.log("Signing key:", wallet.payer.publicKey.toString());
-  console.log("Escrow key:", escrow.publicKey.toString());
+  console.log("Escrow key:", escrow.toString());
 
   await stakingProgram.rpc.migrateEscrow(
     {
       accounts: {
+        stakingKey: stakingKeyPublicKey,
         escrow: escrow,
         auth: wallet.payer.publicKey,
         systemProgram: SystemProgram.programId,
