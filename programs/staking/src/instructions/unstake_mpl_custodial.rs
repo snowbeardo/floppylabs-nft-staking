@@ -4,6 +4,7 @@ use anchor_spl::token::{self, CloseAccount, Token, TokenAccount, Transfer};
 use anchor_lang::system_program;
 
 use mpl_token_metadata::{
+    state::{TokenStandard, Metadata, TokenMetadataAccount},
     instruction::{
         TransferArgs, InstructionBuilder, builders::{TransferBuilder}}};
 
@@ -118,6 +119,10 @@ pub struct UnstakeMplCustodial<'info> {
     pub token_record: UncheckedAccount<'info>,
 
     /// CHECK: checked in cpi
+    #[account(mut)]
+    pub owner_token_record: UncheckedAccount<'info>,
+
+    /// CHECK: checked in cpi
     #[account(address = mpl_token_metadata::ID)]
     pub token_metadata_program: UncheckedAccount<'info>,
 
@@ -184,6 +189,12 @@ pub fn handler(ctx: Context<UnstakeMplCustodial>) -> Result<()> {
         .spl_ata_program(ctx.accounts.ata_program.key())
         .authorization_rules(ctx.accounts.authorization_rules.key())
         .authorization_rules_program(ctx.accounts.authorization_rules_program.key());
+
+    let metadata = Metadata::from_account_info(&ctx.accounts.metadata.to_account_info())?;
+    if metadata.token_standard == Some(TokenStandard::ProgrammableNonFungible) {
+        transfer_builder.owner_token_record(ctx.accounts.owner_token_record.key());
+        transfer_builder.destination_token_record(ctx.accounts.token_record.key());
+    }
     
     let transfer = transfer_builder.build(TransferArgs::V1 {
             amount: 1,
@@ -199,8 +210,8 @@ pub fn handler(ctx: Context<UnstakeMplCustodial>) -> Result<()> {
                ctx.accounts.mint.to_account_info(),
                ctx.accounts.metadata.to_account_info(),
                ctx.accounts.master_edition.to_account_info(),
-               ctx.accounts.token_metadata_program.to_account_info(),
-               ctx.accounts.token_metadata_program.to_account_info(),
+               ctx.accounts.owner_token_record.to_account_info(),
+               ctx.accounts.token_record.to_account_info(),
                ctx.accounts.escrow.to_account_info(),
                ctx.accounts.staker.to_account_info(),
                ctx.accounts.system_program.to_account_info(),

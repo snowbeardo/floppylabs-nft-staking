@@ -205,7 +205,18 @@ export const testUnstakeMplCustodial = (
           ownerAccount.toBuffer(),
         ],
         TOKEN_METADATA_PROGRAM,
-      );            
+      );
+
+      const [ownerTokenRecordAccount] = await PublicKey.findProgramAddress(
+        [
+          Buffer.from('metadata'),
+          TOKEN_METADATA_PROGRAM.toBuffer(),
+          mints[NFTIndex].toBuffer(),
+          Buffer.from('token_record'),
+          deposit.toBuffer(),
+        ],
+        TOKEN_METADATA_PROGRAM,
+      );
     
       await program.rpc.stakeNft(
         bumps,
@@ -275,6 +286,7 @@ export const testUnstakeMplCustodial = (
             masterEdition: masterEddition,
             metadata: metadataAccount,
             tokenRecord: tokenRecordAccount,
+            ownerTokenRecord: ownerTokenRecordAccount,
             tokenMetadataProgram: TOKEN_METADATA_PROGRAM,
             tokenProgram: TOKEN_PROGRAM_ID,
             authorizationRulesProgram: TOKEN_AUTH_RULES_ID,

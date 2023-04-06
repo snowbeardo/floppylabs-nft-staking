@@ -81,11 +81,6 @@ mod staking {
         instructions::stake_nft::handler(ctx, bumps, proof, rarity_multiplier)
     }
 
-    /*/// Unstake a staked nft
-    pub fn unstake_nft(ctx: Context<UnstakeNft>) -> Result<()> {
-        instructions::unstake_nft::handler(ctx)
-    }*/
-
     /// Stake an OCP NFT (ME royalties enforcement standard)
     pub fn stake_ocp(
         ctx: Context<StakeOcp>,
