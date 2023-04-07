@@ -4,7 +4,7 @@ use anchor_lang::system_program;
 use anchor_spl::token::{self, Token, TokenAccount, Transfer};
 
 use mpl_token_metadata::{
-    state::{TokenStandard, Metadata, TokenMetadataAccount},
+    state::{TokenStandard, Metadata, TokenMetadataAccount, TokenRecord, TokenDelegateRole},
     instruction::{
         RevokeArgs, UnlockArgs, InstructionBuilder, builders::{RevokeBuilder, UnlockBuilder}}};
 use solana_program::program::{invoke, invoke_signed};
@@ -210,7 +210,17 @@ pub fn handler(ctx: Context<UnstakeMpl>) -> Result<()> {
         .spl_token_program(ctx.accounts.token_program.key());    
 
     let revoke_args = match metadata.token_standard {
-        Some(TokenStandard::ProgrammableNonFungible) => RevokeArgs::StakingV1,
+        Some(TokenStandard::ProgrammableNonFungible) => {
+            let token_record:TokenRecord = TokenRecord::from_account_info(&ctx.accounts.token_record.to_account_info())?;
+            match token_record.delegate_role {
+                // Staking
+                Some(TokenDelegateRole::Staking) => RevokeArgs::StakingV1,
+                // Migration
+                Some(TokenDelegateRole::Migration) => RevokeArgs::MigrationV1,
+                // Default to standard
+                _ => RevokeArgs::StandardV1
+            }
+        },
         _ => RevokeArgs::StandardV1
     };
 

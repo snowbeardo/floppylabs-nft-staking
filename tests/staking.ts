@@ -70,10 +70,10 @@ describe("Staking Tests Suite", () => {
   //testWithdrawRewards(state, provider);
   //testStakeNft(state, provider);
   //testUnstakeNft(state, provider);
-  testStakeOcp(state, provider); // To make it work, enable ocp policy (DEVNET allow all) in Anchor.toml
+  //testStakeOcp(state, provider); // To make it work, enable ocp policy (DEVNET allow all) in Anchor.toml
   //testUnstakeOcp(state, provider); // To make it work, enable ocp policy (DEVNET allow all) in Anchor.toml
   //testStakeMpl(state, provider);
-  //testUnstakeMpl(state, provider);
+  testUnstakeMpl(state, provider);
   //testUnstakeMplCustodial(state, provider); // To make it work, enable stakeNFT instruction
   //testClaimRewards(state, provider);
   //testMigrateEscrow(state, provider);

@@ -61,7 +61,7 @@ mod staking {
     }
 
     /// Withdraw rewards from the vault
-    pub fn withdraw_rewards(
+    /*pub fn withdraw_rewards(
         ctx: Context<WithdrawRewards>,
         amount: u64
     ) -> Result<()> {
@@ -69,7 +69,7 @@ mod staking {
             ctx,
             amount
         )
-    }
+    }*/
 
     /// Stake an NFT
     pub fn stake_nft(
