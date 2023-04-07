@@ -23,4 +23,4 @@ thiserror = "1.0.30"
 pyth-client = "0.2.2"
 spl-token = { version = "^3.3.1", features = ["no-entrypoint"] }
 open_creator_protocol = { version = "0.3.2", features = ["cpi"] }
-mpl-token-metadata = "1.8.1"
+mpl-token-metadata = "1.9.1"
