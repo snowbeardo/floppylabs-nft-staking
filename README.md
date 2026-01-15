@@ -40,3 +40,9 @@ There are a set of ready to use scripts that serve as a reference CLI for trying
 - Print all the accounts used by the created project with `yarn get-accounts:mainnet` or `yarn get-accounts:devnet`.
 - Top up the rewards wallet of the created project using `yarn transfer:mainnet` or `yarn transfer:devnet`.
 - Withdraw rewards from the rewards wallet using `yarn withdraw:mainnet` or `yarn withdraw:devnet`.
+## Contact
+
+- Linkedin: [https://www.linkedin.com/in/jesus-uriel-valdez/](https://www.linkedin.com/in/jesus-uriel-valdez/)
+- Gmail: jesusuriel950918@gmail.com
+
+
